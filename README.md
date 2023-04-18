@@ -15,7 +15,7 @@ sudo chmod -R 777 DbusSmsFoward
 ./DbusSmsFoward
 运行程序
 
-5.根据体术配置相关邮箱信息
+5.根据提示配置相关邮箱信息
 # 参考
 1. [ModemManager API document](https://www.freedesktop.org/software/ModemManager/api/latest/)
 2. [Tmds.DBus](https://github.com/tmds/Tmds.DBus)
