@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33530.505
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbusSmsFoward", "DbusTest\DbusSmsFoward.csproj", "{FDF431F9-11F0-4EEC-AE1A-72A875087986}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FDF431F9-11F0-4EEC-AE1A-72A875087986}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDF431F9-11F0-4EEC-AE1A-72A875087986}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDF431F9-11F0-4EEC-AE1A-72A875087986}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDF431F9-11F0-4EEC-AE1A-72A875087986}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {98BDE03E-0B50-4652-8111-3B1076B339A2}
+	EndGlobalSection
+EndGlobal
