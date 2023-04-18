@@ -3,8 +3,6 @@ using ModemManager1.DBus;
 using System.Configuration;
 using Tmds.DBus;
 using System.Net.Mail;
-using static System.Net.Mime.MediaTypeNames;
-using System.Xml.Linq;
 using System.Net;
 
 string smtpHost = ConfigurationManager.AppSettings["smtpHost"];
