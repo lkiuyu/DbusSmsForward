@@ -36,15 +36,64 @@ if (string.IsNullOrEmpty(smtpHost)&& string.IsNullOrEmpty(smtpPort) && string.Is
 
     cfa.Save();
 
-    Console.WriteLine("正在运行. 按下 Ctrl-C 停止.");
-
 }
-else
+string StartGuideResult = onStartGuide();
+if (StartGuideResult == "1")
 {
     Console.WriteLine("正在运行. 按下 Ctrl-C 停止.");
-}
 
-Task.Run(async () =>
+
+    Task.Run(async () =>
+    {
+        using (var connection = new Connection(Address.System))
+        {
+            await connection.ConnectAsync();
+            var objectPath = new ObjectPath("/org/freedesktop/ModemManager1/Modem/0");
+            var service = "org.freedesktop.ModemManager1";
+            var imsg = connection.CreateProxy<IMessaging>(service, objectPath);
+            await imsg.WatchAddedAsync(
+             async change =>
+             {
+                 if (change.received)
+                 {
+                     Console.WriteLine(change.path);
+                     var isms = connection.CreateProxy<ISms>("org.freedesktop.ModemManager1", change.path);
+                     string tel = await isms.GetNumberAsync();
+                     string stime = (await isms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
+                     string smscontent = await isms.GetTextAsync();
+                     string body = "发信电话:" + tel + "\n" + "时间:" + stime + "\n" + "短信内容:" + smscontent;
+                     Console.WriteLine(body);
+                     MailAddress to = new MailAddress(reciveEmial);
+                     MailAddress from = new MailAddress(sendEmial);
+                     MailMessage mm = new MailMessage(from, to);
+                     SmtpClient sc = new SmtpClient(smtpHost);
+                     try
+                     {
+                         mm.Subject = "短信转发" + tel;
+                         mm.Body = body;
+                         sc.DeliveryMethod = SmtpDeliveryMethod.Network;
+                         sc.Credentials = new NetworkCredential(sendEmial, emailKey);
+                         sc.Send(mm);
+                         Console.WriteLine("转发成功");
+                         mm.Dispose();
+                         sc.Dispose();
+                     }
+                     catch (SmtpException ex)
+                     {
+                         mm.Dispose();
+                         sc.Dispose();
+                         Console.WriteLine(ex);
+                         Console.WriteLine("出错了，尝试确认下配置文件中的邮箱信息是否正确，配置文件为DbusSmsFoward.dll.config");
+                     }
+                 }
+             }
+         );
+            await Task.Delay(int.MaxValue);
+
+        }
+    }).Wait();
+}
+else if(StartGuideResult == "2")
 {
     using (var connection = new Connection(Address.System))
     {
@@ -52,44 +101,65 @@ Task.Run(async () =>
         var objectPath = new ObjectPath("/org/freedesktop/ModemManager1/Modem/0");
         var service = "org.freedesktop.ModemManager1";
         var imsg = connection.CreateProxy<IMessaging>(service, objectPath);
-        await imsg.WatchAddedAsync(
-         async change =>
-         {
-             Console.WriteLine(change.path);
-             var isms = connection.CreateProxy<ISms>("org.freedesktop.ModemManager1", change.path);
-             string tel = await isms.GetNumberAsync();
-             string stime = (await isms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
-             string smscontent = await isms.GetTextAsync();
-             string body = "发信电话:" + tel + "\n" + "时间:" + stime + "\n" + "短信内容:" + smscontent;
-             Console.WriteLine(body);
-             MailAddress to = new MailAddress(reciveEmial);
-             MailAddress from = new MailAddress(sendEmial);
-             MailMessage mm = new MailMessage(from, to);
-             SmtpClient sc = new SmtpClient(smtpHost);
-             try
-             {
-                 mm.Subject = "短信转发" + tel;
-                 mm.Body = body;
-                 sc.DeliveryMethod = SmtpDeliveryMethod.Network;
-                 sc.Credentials = new NetworkCredential(sendEmial, emailKey);
-                 sc.Send(mm);
-                 Console.WriteLine("转发成功");
-                 mm.Dispose();
-                 sc.Dispose();
-             }
-             catch (SmtpException ex)
-             {
-                 mm.Dispose();
-                 sc.Dispose();
-                 Console.WriteLine(ex);
-                 Console.WriteLine("出错了，尝试确认下配置文件中的邮箱信息是否正确，配置文件为DbusSmsFoward.dll.config");
-             }
-         }
-     );
-        await Task.Delay(int.MaxValue);
-
+        var sendsmsPath=await imsg.CreateAsync(sendSms());
+        Console.WriteLine("短信创建成功，是否发送？(1.发送短信,其他按键退出程序)");
+        string sendChoise=Console.ReadLine();
+        if(sendChoise == "1")
+        {
+            var isms = connection.CreateProxy<ISms>("org.freedesktop.ModemManager1", sendsmsPath);
+            await isms.SendAsync();
+            Console.WriteLine("短信已发送");
+        }
+        else
+        {
+            await imsg.DeleteAsync(sendsmsPath);
+            Console.WriteLine("短信缓存已清理，按回车返回运行模式选择");
+            Console.ReadLine();
+            
+        }
     }
-}).Wait();
-Console.WriteLine("end");
+}
 
+
+
+
+
+
+
+string onStartGuide()
+{
+    Console.WriteLine("请选择运行模式：1为短信转发模式，2为发短信模式");
+    string chooseOption=Console.ReadLine();
+    if(chooseOption =="1"|| chooseOption == "2")
+    {
+        if (chooseOption == "1")
+        {
+            return "1";
+        }
+        else if(chooseOption == "2")
+        {
+            return "2";
+        }
+        else
+        {
+            return "";
+        }
+    }
+    else
+    {
+        Console.WriteLine("请输入1或2");
+        return onStartGuide();
+    }
+
+}
+
+Dictionary<string, object> sendSms()
+{
+    Console.WriteLine("请输入收信号码：");
+    string telNumber = Console.ReadLine();
+    Console.WriteLine("请输入短信内容");
+    string smsText = Console.ReadLine();
+    return new Dictionary<string, object> { { "text", smsText }, { "number", telNumber } };
+
+}
 
