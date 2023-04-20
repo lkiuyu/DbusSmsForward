@@ -64,7 +64,7 @@ if (StartGuideResult == "1")
                      string body = "发信电话:" + tel + "\n" + "时间:" + stime + "\n" + "短信内容:" + smscontent;
                      Console.WriteLine(body);
                      MailAddress to = new MailAddress(reciveEmial);
-                     MailAddress from = new MailAddress(sendEmial);
+                     MailAddress from = new MailAddress(sendEmial,"SMSForwad");
                      MailMessage mm = new MailMessage(from, to);
                      SmtpClient sc = new SmtpClient(smtpHost);
                      try
@@ -83,7 +83,7 @@ if (StartGuideResult == "1")
                          mm.Dispose();
                          sc.Dispose();
                          Console.WriteLine(ex);
-                         Console.WriteLine("出错了，尝试确认下配置文件中的邮箱信息是否正确，配置文件为DbusSmsFoward.dll.config");
+                         Console.WriteLine("出错了，尝试确认下配置文件中的邮箱信息是否正确，配置文件为DbusSmsForward.dll.config");
                      }
                  }
              }
