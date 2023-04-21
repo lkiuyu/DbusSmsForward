@@ -13,18 +13,7 @@ namespace DbusSmsForward.ProcessUserChoise
             }
             if (chooseOption == "1" || chooseOption == "2")
             {
-                if (chooseOption == "1")
-                {
-                    return "1";
-                }
-                else if (chooseOption == "2")
-                {
-                    return "2";
-                }
-                else
-                {
-                    return "";
-                }
+                return chooseOption;
             }
             else
             {
