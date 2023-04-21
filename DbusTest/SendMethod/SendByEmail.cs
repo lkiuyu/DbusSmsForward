@@ -1,18 +1,50 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Mail;
+﻿using System.Net.Mail;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Configuration;
 
 namespace DbusSmsForward.SendMethod
 {
     public static class SendByEmail
     {
+        public static void SetupEmailInfo()
+        {
+            string smtpHost = ConfigurationManager.AppSettings["smtpHost"];
+            string smtpPort = ConfigurationManager.AppSettings["smtpPort"];
+            string emailKey = ConfigurationManager.AppSettings["emailKey"];
+            string sendEmial = ConfigurationManager.AppSettings["sendEmial"];
+            string reciveEmial = ConfigurationManager.AppSettings["reciveEmial"];
+            if (string.IsNullOrEmpty(smtpHost) && string.IsNullOrEmpty(smtpPort) && string.IsNullOrEmpty(emailKey) && string.IsNullOrEmpty(sendEmial) && string.IsNullOrEmpty(reciveEmial))
+            {
+                Configuration cfa = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                Console.WriteLine("首次运行请输入邮箱转发相关配置信息\n请输入smtp地址：");
+                smtpHost = Console.ReadLine().Trim();
+                cfa.AppSettings.Settings["smtpHost"].Value = smtpHost;
+
+                Console.WriteLine("请输入smtp端口：");
+                smtpPort = Console.ReadLine().Trim();
+                cfa.AppSettings.Settings["smtpPort"].Value = smtpPort;
+
+                Console.WriteLine("请输入邮箱密钥：");
+                emailKey = Console.ReadLine().Trim();
+                cfa.AppSettings.Settings["emailKey"].Value = emailKey;
+
+                Console.WriteLine("请输入发件邮箱：");
+                sendEmial = Console.ReadLine().Trim();
+                cfa.AppSettings.Settings["sendEmial"].Value = sendEmial;
+
+                Console.WriteLine("请输入收件邮箱：");
+                reciveEmial = Console.ReadLine().Trim();
+                cfa.AppSettings.Settings["reciveEmial"].Value = reciveEmial;
+
+                cfa.Save();
+
+            }
+        }
+
+
         public static void SendSms(string number,string body)
         {
+            ConfigurationManager.RefreshSection("appSettings");
             string smtpHost = ConfigurationManager.AppSettings["smtpHost"];
             string smtpPort = ConfigurationManager.AppSettings["smtpPort"];
             string emailKey = ConfigurationManager.AppSettings["emailKey"];
@@ -30,7 +62,7 @@ namespace DbusSmsForward.SendMethod
                 sc.DeliveryMethod = SmtpDeliveryMethod.Network;
                 sc.Credentials = new NetworkCredential(sendEmial, emailKey);
                 sc.Send(mm);
-                Console.WriteLine("转发成功");
+                Console.WriteLine("邮箱转发成功");
                 mm.Dispose();
                 sc.Dispose();
             }
