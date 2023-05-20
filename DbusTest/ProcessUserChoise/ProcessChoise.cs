@@ -27,10 +27,10 @@ namespace DbusSmsForward.ProcessUserChoise
         {
             if(string.IsNullOrEmpty(chooseOption))
             {
-                Console.WriteLine("请选择转发渠道：1.邮箱转发，2.pushplus转发，3.企业微信转发");
+                Console.WriteLine("请选择转发渠道：1.邮箱转发，2.pushplus转发，3.企业微信转发，4.TG机器人转发");
                 chooseOption = Console.ReadLine();
             }
-            if (chooseOption == "1" || chooseOption == "2" || chooseOption == "3")
+            if (chooseOption == "1" || chooseOption == "2" || chooseOption == "3" || chooseOption == "4")
             {
                 if (chooseOption == "1")
                 {
@@ -47,6 +47,11 @@ namespace DbusSmsForward.ProcessUserChoise
                     SendByWeComApplication.SetupWeComInfo();
                     return "3";
                 }
+                else if (chooseOption == "4")
+                {
+                    SendByTelegramBot.SetupTGBotInfo();
+                    return "4";
+                }
                 else
                 {
                     return "";
@@ -54,7 +59,7 @@ namespace DbusSmsForward.ProcessUserChoise
             }
             else
             {
-                Console.WriteLine("请输入1或2或3");
+                Console.WriteLine("请输入1或2或3或4");
                 return sendMethodGuide("");
             }
         }

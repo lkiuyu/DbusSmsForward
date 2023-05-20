@@ -26,8 +26,6 @@ namespace DbusSmsForward.SendMethod
                 appsecret = Console.ReadLine().Trim();
                 cfa.AppSettings.Settings["WeChatQYApplicationSecret"].Value = appsecret;
 
-               
-
                 cfa.Save();
             }
         }

@@ -12,7 +12,7 @@ sudo chmod -R 777 DbusSmsForward
 配置程序可执行权限
 
 4.输入
-./DbusSmsForward
+sudo ./DbusSmsForward
 运行程序
 
 5.根据提示配置相关邮箱信息
@@ -20,19 +20,23 @@ sudo chmod -R 777 DbusSmsForward
 6.带参数运行跳过程序初始的运行模式选择以达到快速运行程序
 
 输入
-./DbusSmsForward -fE
+sudo ./DbusSmsForward -fE
 跳过运行模式选择直接进入邮箱转发模式
 
 输入
-./DbusSmsForward -fP
+sudo ./DbusSmsForward -fP
 跳过运行模式选择直接进入PushPlus转发模式
 
 输入
-./DbusSmsForward -fW
+sudo ./DbusSmsForward -fW
 跳过运行模式选择直接进入企业微信转发模式
 
 输入
-./DbusSmsForward -sS
+sudo ./DbusSmsForward -fT
+跳过运行模式选择直接进入TGBot转发模式
+
+输入
+sudo ./DbusSmsForward -sS
 跳过运行模式选择直接进入短信发送界面
 
 # 参考
