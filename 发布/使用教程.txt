@@ -12,7 +12,7 @@ sudo chmod -R 777 DbusSmsForward
 sudo ./DbusSmsForward
 运行程序
 
-5.根据体术配置相关邮箱信息
+5.根据提示配置相关邮箱信息
 
 6.带参数运行跳过程序初始的运行模式选择以达到快速运行程序
 
@@ -31,6 +31,10 @@ sudo ./DbusSmsForward -fW
 输入
 sudo ./DbusSmsForward -fT
 跳过运行模式选择直接进入TGBot转发模式
+
+输入
+sudo ./DbusSmsForward -fD
+跳过运行模式选择直接进入钉钉转发模式
 
 输入
 sudo ./DbusSmsForward -sS

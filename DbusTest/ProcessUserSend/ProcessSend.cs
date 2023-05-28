@@ -29,6 +29,10 @@ namespace DbusSmsForward.ProcessUserSend
                 {
                     SendByTelegramBot.SendSms(tel, body);
                 }
+                if(sendMethodGuideResult == "5")
+                {
+                    SendByDingTalkBot.SendSms(tel, body);
+                }
             }
             catch(Exception e)
             {

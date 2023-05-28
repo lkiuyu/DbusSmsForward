@@ -1,5 +1,5 @@
 # DbusSmsFoward
-用于部分随身wifi刷了Debian后的短信的Email、PushPlus、企业微信自建应用转发以及短信发送，通过监听dbus实时获取新接收的短信并转发以及调用dbus发送短信
+用于部分随身wifi刷了Debian后的短信的Email、PushPlus、企业微信自建应用、钉钉机器人消息转发以及短信发送，通过监听dbus实时获取新接收的短信并转发以及调用dbus发送短信
 # 使用教程
 1.输入
 sudo apt install libicu67
@@ -34,6 +34,10 @@ sudo ./DbusSmsForward -fW
 输入
 sudo ./DbusSmsForward -fT
 跳过运行模式选择直接进入TGBot转发模式
+
+输入
+sudo ./DbusSmsForward -fD
+跳过运行模式选择直接进入钉钉转发模式
 
 输入
 sudo ./DbusSmsForward -sS
