@@ -27,10 +27,10 @@ namespace DbusSmsForward.ProcessUserChoise
         {
             if(string.IsNullOrEmpty(chooseOption))
             {
-                Console.WriteLine("请选择转发渠道：1.邮箱转发，2.pushplus转发，3.企业微信转发，4.TG机器人转发，5.钉钉转发");
+                Console.WriteLine("请选择转发渠道：1.邮箱转发，2.pushplus转发，3.企业微信转发，4.TG机器人转发，5.钉钉转发，6.Bark转发");
                 chooseOption = Console.ReadLine();
             }
-            if (chooseOption == "1" || chooseOption == "2" || chooseOption == "3" || chooseOption == "4" || chooseOption == "5")
+            if (chooseOption == "1" || chooseOption == "2" || chooseOption == "3" || chooseOption == "4" || chooseOption == "5" || chooseOption == "6")
             {
                 if (chooseOption == "1")
                 {
@@ -51,10 +51,16 @@ namespace DbusSmsForward.ProcessUserChoise
                 {
                     SendByTelegramBot.SetupTGBotInfo();
                     return "4";
-                }else if(chooseOption == "5")
+                }
+                else if(chooseOption == "5")
                 {
                     SendByDingTalkBot.SetupDingtalkBotMsg();
                     return "5";
+                }
+                else if (chooseOption == "6")
+                {
+                    SendByBark.SetupBarkInfo();
+                    return "6";
                 }
                 else
                 {
@@ -63,7 +69,7 @@ namespace DbusSmsForward.ProcessUserChoise
             }
             else
             {
-                Console.WriteLine("请输入1或2或3或4或5");
+                Console.WriteLine("请输入1或2或3或4或5或6");
                 return sendMethodGuide("");
             }
         }

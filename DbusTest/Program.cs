@@ -34,6 +34,11 @@ foreach (var s1 in args)
         startGuideChoiseNum = "1";
         sendMethodGuideChoiseNum = "5";
     }
+    else if (s1 == "-fB")
+    {
+        startGuideChoiseNum = "1";
+        sendMethodGuideChoiseNum = "6";
+    }
     else if (s1 == "-sS")
     {
         startGuideChoiseNum = "2";

@@ -37,5 +37,9 @@ sudo ./DbusSmsForward -fD
 跳过运行模式选择直接进入钉钉转发模式
 
 输入
+sudo ./DbusSmsForward -fB
+跳过运行模式选择直接进入Bark转发模式
+
+输入
 sudo ./DbusSmsForward -sS
 跳过运行模式选择直接进入短信发送界面

@@ -33,6 +33,10 @@ namespace DbusSmsForward.ProcessUserSend
                 {
                     SendByDingTalkBot.SendSms(tel, body);
                 }
+                if (sendMethodGuideResult == "6")
+                {
+                    SendByBark.SendSms(tel, body);
+                }
             }
             catch(Exception e)
             {
