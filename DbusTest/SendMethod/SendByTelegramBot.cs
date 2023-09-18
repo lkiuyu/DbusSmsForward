@@ -15,16 +15,39 @@ namespace DbusSmsForward.SendMethod
         {
             string TGBotToken = ConfigurationManager.AppSettings["TGBotToken"];
             string TGBotChatID = ConfigurationManager.AppSettings["TGBotChatID"];
+            string IsEnableCustomTGBotApi = ConfigurationManager.AppSettings["IsEnableCustomTGBotApi"];
+            string CustomTGBotApi = ConfigurationManager.AppSettings["CustomTGBotApi"];
 
-            if (string.IsNullOrEmpty(TGBotToken) && string.IsNullOrEmpty(TGBotChatID))
+
+            if (string.IsNullOrEmpty(TGBotToken) && string.IsNullOrEmpty(TGBotChatID)&& string.IsNullOrEmpty(IsEnableCustomTGBotApi))
             {
                 Configuration cfa = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 Console.WriteLine("首次运行请输入TG机器人Token：");
                 TGBotToken = Console.ReadLine().Trim();
                 cfa.AppSettings.Settings["TGBotToken"].Value = TGBotToken;
-                Console.WriteLine("首次运行请输入机器人要转发到的ChatId");
+                Console.WriteLine("请输入机器人要转发到的ChatId");
                 TGBotChatID = Console.ReadLine().Trim();
                 cfa.AppSettings.Settings["TGBotChatID"].Value = TGBotChatID;
+
+                string customApiEnableInput=string.Empty;
+                do
+                {
+                    Console.WriteLine("是否需要使用自定义api(1.使用 2.不使用)");
+                    customApiEnableInput= Console.ReadLine().Trim();
+                } while (!(customApiEnableInput=="1"|| customApiEnableInput == "2"));
+                if(customApiEnableInput=="1")
+                {
+                    IsEnableCustomTGBotApi = "true";
+                    cfa.AppSettings.Settings["IsEnableCustomTGBotApi"].Value = IsEnableCustomTGBotApi;
+                    Console.WriteLine("请输入机器人自定义api(格式https://xxx.abc.com)");
+                    CustomTGBotApi= Console.ReadLine().Trim();
+                    cfa.AppSettings.Settings["CustomTGBotApi"].Value = CustomTGBotApi;
+                }
+                else
+                {
+                    IsEnableCustomTGBotApi = "false";
+                    cfa.AppSettings.Settings["IsEnableCustomTGBotApi"].Value = IsEnableCustomTGBotApi;
+                }
                 cfa.Save();
             }
         }
@@ -34,7 +57,19 @@ namespace DbusSmsForward.SendMethod
             ConfigurationManager.RefreshSection("appSettings");
             string TGBotToken = ConfigurationManager.AppSettings["TGBotToken"];
             string TGBotChatID = ConfigurationManager.AppSettings["TGBotChatID"];
-            string url = "https://api.telegram.org/bot" + TGBotToken + "/sendMessage?chat_id=" + TGBotChatID + "&text=";
+            string IsEnableCustomTGBotApi = ConfigurationManager.AppSettings["IsEnableCustomTGBotApi"];
+            string CustomTGBotApi = ConfigurationManager.AppSettings["CustomTGBotApi"];
+
+            string url = "";
+            if (IsEnableCustomTGBotApi=="true")
+            {
+                url = CustomTGBotApi;
+            }
+            else
+            {
+                url = "https://api.telegram.org";
+            }
+            url+= "/bot" + TGBotToken + "/sendMessage?chat_id=" + TGBotChatID + "&text=";
             url += System.Web.HttpUtility.UrlEncode(body);
             string msgresult = HttpHelper.HttpGet(url);
             JObject jsonObjresult = JObject.Parse(msgresult);
