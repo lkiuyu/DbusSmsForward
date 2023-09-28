@@ -1,6 +1,8 @@
 ﻿using System.Net.Mail;
 using System.Net;
 using System.Configuration;
+using DbusSmsForward.SMSModel;
+using DbusSmsForward.ProcessSmsContent;
 
 namespace DbusSmsForward.SendMethod
 {
@@ -42,7 +44,7 @@ namespace DbusSmsForward.SendMethod
         }
 
 
-        public static void SendSms(string number,string body)
+        public static void SendSms(SmsContentModel smsmodel, string body)
         {
             ConfigurationManager.RefreshSection("appSettings");
             string smtpHost = ConfigurationManager.AppSettings["smtpHost"];
@@ -57,7 +59,8 @@ namespace DbusSmsForward.SendMethod
             SmtpClient sc = new SmtpClient(smtpHost);
             try
             {
-                mm.Subject = "短信转发" + number;
+                string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+                mm.Subject = (string.IsNullOrEmpty(SmsCodeStr)?"": SmsCodeStr + " ") + "短信转发" + smsmodel.TelNumber;
                 mm.Body = body;
                 sc.DeliveryMethod = SmtpDeliveryMethod.Network;
                 sc.Credentials = new NetworkCredential(sendEmial, emailKey);

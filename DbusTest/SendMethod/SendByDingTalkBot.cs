@@ -6,6 +6,8 @@ using System.Security.Cryptography;
 using System.Text.Encodings.Web;
 using System.Text;
 using System.Web;
+using DbusSmsForward.SMSModel;
+using DbusSmsForward.ProcessSmsContent;
 
 namespace DbusSmsForward.SendMethod
 {
@@ -31,12 +33,13 @@ namespace DbusSmsForward.SendMethod
             }
         }
 
-        public static void SendSms(string number, string body)
+        public static void SendSms(SmsContentModel smsmodel, string body)
         {
             ConfigurationManager.RefreshSection("appSettings");
             string dingTalkAccessToken = ConfigurationManager.AppSettings["DingTalkAccessToken"];
             string dingTalkSecret = ConfigurationManager.AppSettings["DingTalkSecret"];
             string url = DING_TALK_BOT_URL + dingTalkAccessToken;
+            string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
 
             long timestamp = ConvertDateTimeToInt(DateTime.Now);
             string sign = addSign(timestamp, dingTalkSecret);
@@ -44,7 +47,7 @@ namespace DbusSmsForward.SendMethod
 
             JObject msgContent = new()
             {
-                { "content", body }
+                { "content", (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + "\n") + "短信转发\n" + body }
             };
 
             JObject msgObj = new()

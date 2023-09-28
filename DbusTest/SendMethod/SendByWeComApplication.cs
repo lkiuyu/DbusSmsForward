@@ -1,4 +1,6 @@
 ﻿using DbusSmsForward.Helper;
+using DbusSmsForward.ProcessSmsContent;
+using DbusSmsForward.SMSModel;
 using Newtonsoft.Json.Linq;
 using System.Configuration;
 
@@ -30,7 +32,7 @@ namespace DbusSmsForward.SendMethod
             }
         }
 
-        public static void SendSms(string number, string body)
+        public static void SendSms(SmsContentModel smsmodel, string body)
         {
             ConfigurationManager.RefreshSection("appSettings");
             string corpid = ConfigurationManager.AppSettings["WeChatQYID"];
@@ -41,6 +43,7 @@ namespace DbusSmsForward.SendMethod
             JObject jsonObj = JObject.Parse(result);
             string errcode = jsonObj["errcode"].ToString();
             string errmsg = jsonObj["errmsg"].ToString();
+            string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
             if (errcode == "0" && errmsg == "ok")
             {
                 string access_token = jsonObj["access_token"].ToString();
@@ -51,7 +54,7 @@ namespace DbusSmsForward.SendMethod
                 obj.Add("totag", "");
                 obj.Add("msgtype", "text");
                 obj.Add("agentid", agentid);
-                obj1.Add("content", "短信转发\n" + body);
+                obj1.Add("content", (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr+"\n")+"短信转发\n" + body);
                 obj.Add("text", obj1);
                 obj.Add("safe", 0);
                 obj.Add("enable_id_trans", 0);

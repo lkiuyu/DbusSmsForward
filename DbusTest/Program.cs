@@ -3,6 +3,7 @@ using Tmds.DBus;
 using DbusSmsForward.SendMethod;
 using DbusSmsForward.ProcessUserChoise;
 using DbusSmsForward.ProcessUserSend;
+using DbusSmsForward.SMSModel;
 
 string startGuideChoiseNum = "";
 string sendMethodGuideChoiseNum = "";
@@ -66,17 +67,17 @@ if (StartGuideResult == "1")
                  {
                      Console.WriteLine(change.path);
                      var isms = connection.CreateProxy<ISms>("org.freedesktop.ModemManager1", change.path);
-                     string tel = await isms.GetNumberAsync();
-                     string stime = (await isms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
+                     SmsContentModel smsmodel = new SmsContentModel();
+                     smsmodel.TelNumber = await isms.GetNumberAsync();
+                     smsmodel.SmsDate = (await isms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
                      string smscontent = "";
                      do
                      {
                          smscontent = "";
                          smscontent = await isms.GetTextAsync();
                      } while (string.IsNullOrEmpty(smscontent));
-                     string body = "发信电话:" + tel + "\n" + "时间:" + stime + "\n" + "短信内容:" + smscontent;
-                     Console.WriteLine(body);
-                     ProcessSend.sendSms(sendMethodGuideResult, tel, body);
+                     smsmodel.SmsContent = smscontent;
+                     ProcessSend.sendSms(sendMethodGuideResult, smsmodel);
                  }
              }
          );

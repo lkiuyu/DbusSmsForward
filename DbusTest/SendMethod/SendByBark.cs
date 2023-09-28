@@ -1,4 +1,6 @@
 ﻿using DbusSmsForward.Helper;
+using DbusSmsForward.ProcessSmsContent;
+using DbusSmsForward.SMSModel;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -29,16 +31,17 @@ namespace DbusSmsForward.SendMethod
             }
         }
 
-        public static void SendSms(string number, string body)
+        public static void SendSms(SmsContentModel smsmodel, string body)
         {
             try
             {
                 ConfigurationManager.RefreshSection("appSettings");
                 string BarkUrl = ConfigurationManager.AppSettings["BarkUrl"];
                 string BrakKey = ConfigurationManager.AppSettings["BrakKey"];
+                string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
                 string url = BarkUrl + "/" + BrakKey + "/";
                 url += System.Web.HttpUtility.UrlEncode(body);
-                url += "?group=" + number + "&title=短信转发" + number;
+                url += "?group=" + smsmodel.TelNumber + "&title="+ (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + " ") + "短信转发" + smsmodel.TelNumber;
                 string msgresult = HttpHelper.HttpGet(url);
                 Console.WriteLine("Bark转发成功");
             }

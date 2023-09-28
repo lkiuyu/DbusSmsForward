@@ -1,4 +1,6 @@
 ﻿using DbusSmsForward.Helper;
+using DbusSmsForward.ProcessSmsContent;
+using DbusSmsForward.SMSModel;
 using Newtonsoft.Json.Linq;
 using System.Configuration;
 
@@ -19,14 +21,16 @@ namespace DbusSmsForward.SendMethod
             }
         }
 
-        public static void SendSms(string number, string body)
+        public static void SendSms(SmsContentModel smsmodel, string body)
         {
             ConfigurationManager.RefreshSection("appSettings");
             string pushPlusToken = ConfigurationManager.AppSettings["pushPlusToken"];
             string pushPlusUrl = "http://www.pushplus.plus/send/";
+            string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+
             JObject obj = new JObject();
             obj.Add("token", pushPlusToken);
-            obj.Add("title", "短信转发"+ number);
+            obj.Add("title", (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr+" ") + "短信转发" + smsmodel.TelNumber);
             obj.Add("content", body);
             obj.Add("topic","");
             string msgresult = HttpHelper.Post(pushPlusUrl, obj);
