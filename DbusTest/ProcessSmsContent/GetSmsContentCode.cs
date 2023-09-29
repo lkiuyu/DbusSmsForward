@@ -28,9 +28,11 @@ namespace DbusSmsForward.ProcessSmsContent
         public static SmsCodeModel GetSmsCodeModel(string smscontent)
         {
             SmsCodeModel smsCodeModel = new SmsCodeModel();
-            if (JudgeSmsContentHasCode(smscontent))
+            string newsmscontent=string.Empty;
+
+            if (JudgeSmsContentHasCode(smscontent,out newsmscontent))
             {
-                string smscode= GetCode(smscontent).Trim();
+                string smscode= GetCode(newsmscontent).Trim();
                 if (string.IsNullOrEmpty(smscode))
                 {
                     smsCodeModel.HasCode = false;
@@ -48,7 +50,7 @@ namespace DbusSmsForward.ProcessSmsContent
             }
             return smsCodeModel;
         }
-        public static bool JudgeSmsContentHasCode(string smscontent)
+        public static bool JudgeSmsContentHasCode(string smscontent,out string newsmscontent)
         {
             ConfigurationManager.RefreshSection("appSettings");
             string codeKeyStr = ConfigurationManager.AppSettings["smsCodeKey"];
@@ -67,14 +69,16 @@ namespace DbusSmsForward.ProcessSmsContent
             {
                 if (smscontent.IndexOf(flag) > -1)
                 {
+                    newsmscontent = smscontent.Replace(flag, " "+flag+" ");
                     return true;
                 }
             }
+            newsmscontent=string.Empty;
             return false;
         }
         public static string GetCode(string smscontent)
         {
-            string pattern = @"(?<=\b[\p{L}\p{N}]{0,1000})\b[A-Za-z0-9]{4,7}\b";
+            string pattern = @"\b[A-Za-z0-9]{4,7}\b";
             MatchCollection SmsCodeMatches = Regex.Matches(smscontent, pattern);
             if (SmsCodeMatches.Count()> 1)
             {
