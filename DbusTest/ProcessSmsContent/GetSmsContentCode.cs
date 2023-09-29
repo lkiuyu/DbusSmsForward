@@ -74,7 +74,7 @@ namespace DbusSmsForward.ProcessSmsContent
         }
         public static string GetCode(string smscontent)
         {
-            string pattern = @"(?<=\b[\p{L}\p{N}]{0,1000})[A-Za-z0-9]{4,7}\b";
+            string pattern = @"(?<=\b[\p{L}\p{N}]{0,1000})\b[A-Za-z0-9]{4,7}\b";
             MatchCollection SmsCodeMatches = Regex.Matches(smscontent, pattern);
             if (SmsCodeMatches.Count()> 1)
             {
