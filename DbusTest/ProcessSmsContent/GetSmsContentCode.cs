@@ -2,6 +2,7 @@
 using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -40,7 +41,6 @@ namespace DbusSmsForward.ProcessSmsContent
                     smsCodeModel.CodeValue = smscode;
                     smsCodeModel.CodeFrom = GetCodeSmsFrom(smscontent);
                 }
-                
             }
             else
             {
@@ -50,7 +50,19 @@ namespace DbusSmsForward.ProcessSmsContent
         }
         public static bool JudgeSmsContentHasCode(string smscontent)
         {
-            string[] flagStrList = { "验证码", "verification", "code", "인증", "代码" };
+            ConfigurationManager.RefreshSection("appSettings");
+            string codeKeyStr = ConfigurationManager.AppSettings["smsCodeKey"];
+            string[] flagStrList = {};
+            try
+            {
+                flagStrList = codeKeyStr.Split("±");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("配置文件中自定义验证码关键词格式有误，已使用默认关键词“验证码”");
+                flagStrList.Append("验证码");
+            }
+
             foreach (string flag in flagStrList)
             {
                 if (smscontent.IndexOf(flag) > -1)
@@ -96,6 +108,15 @@ namespace DbusSmsForward.ProcessSmsContent
             if (match.Success)
             {
                 return match.Value;
+            }
+            else
+            {
+                string pattern1 = @"【([^【】]+)】$";
+                Match match1 = Regex.Match(smscontent, pattern1);
+                if (match1.Success)
+                {
+                    return match1.Value;
+                }
             }
             return "";
         }
