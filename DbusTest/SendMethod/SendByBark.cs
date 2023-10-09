@@ -41,9 +41,19 @@ namespace DbusSmsForward.SendMethod
                 string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
                 string url = BarkUrl + "/" + BrakKey + "/";
                 url += System.Web.HttpUtility.UrlEncode(body);
-                url += "?group=" + smsmodel.TelNumber + "&title="+ (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + " ") + "短信转发" + smsmodel.TelNumber;
+                url += "?group=" + smsmodel.TelNumber + "&title="+ (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + " ") + "短信转发" + smsmodel.TelNumber+(string.IsNullOrEmpty(SmsCodeStr)?"":"&autoCopy=1&copy="+ GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent).CodeValue);
                 string msgresult = HttpHelper.HttpGet(url);
-                Console.WriteLine("Bark转发成功");
+                JObject jsonObjresult = JObject.Parse(msgresult);
+                string status = jsonObjresult["code"].ToString();
+                if (status == "200")
+                {
+                    Console.WriteLine("Bark转发成功");
+                }
+                else
+                {
+                    Console.WriteLine(jsonObjresult["code"].ToString());
+                    Console.WriteLine(jsonObjresult["message"].ToString());
+                }
             }
             catch(Exception ex)
             {
