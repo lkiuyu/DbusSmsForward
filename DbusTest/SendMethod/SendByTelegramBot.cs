@@ -1,13 +1,9 @@
 ﻿using DbusSmsForward.Helper;
 using DbusSmsForward.ProcessSmsContent;
 using DbusSmsForward.SMSModel;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace DbusSmsForward.SendMethod
 {
@@ -75,7 +71,8 @@ namespace DbusSmsForward.SendMethod
             url+= "/bot" + TGBotToken + "/sendMessage?chat_id=" + TGBotChatID + "&text=";
             url += System.Web.HttpUtility.UrlEncode((string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + "\n") + "短信转发\n" + body);
             string msgresult = HttpHelper.HttpGet(url);
-            JObject jsonObjresult = JObject.Parse(msgresult);
+            //JsonObject jsonObjresult = JObject.Parse(msgresult);
+            JsonObject jsonObjresult = JsonSerializer.Deserialize(msgresult, SourceGenerationContext.Default.JsonObject);
             string status = jsonObjresult["ok"].ToString();
             if (status == "True")
             {

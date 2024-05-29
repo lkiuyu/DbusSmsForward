@@ -1,13 +1,8 @@
 ﻿using DbusSmsForward.Helper;
 using DbusSmsForward.ProcessSmsContent;
 using DbusSmsForward.SMSModel;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace DbusSmsForward.SendMethod
 {
@@ -43,7 +38,8 @@ namespace DbusSmsForward.SendMethod
                 url += System.Web.HttpUtility.UrlEncode(body);
                 url += "?group=" + smsmodel.TelNumber + "&title="+ (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + " ") + "短信转发" + smsmodel.TelNumber+(string.IsNullOrEmpty(SmsCodeStr)?"":"&autoCopy=1&copy="+ GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent).CodeValue);
                 string msgresult = HttpHelper.HttpGet(url);
-                JObject jsonObjresult = JObject.Parse(msgresult);
+                //JsonObject jsonObjresult = JObject.Parse(msgresult);
+                var jsonObjresult = JsonSerializer.Deserialize(msgresult, SourceGenerationContext.Default.JsonObject);
                 string status = jsonObjresult["code"].ToString();
                 if (status == "200")
                 {

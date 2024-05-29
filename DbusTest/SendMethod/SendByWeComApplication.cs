@@ -1,8 +1,10 @@
 ﻿using DbusSmsForward.Helper;
 using DbusSmsForward.ProcessSmsContent;
 using DbusSmsForward.SMSModel;
-using Newtonsoft.Json.Linq;
 using System.Configuration;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace DbusSmsForward.SendMethod
 {
@@ -40,15 +42,16 @@ namespace DbusSmsForward.SendMethod
             int agentid =Convert.ToInt32(ConfigurationManager.AppSettings["WeChatQYApplicationID"]);
             string url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=" + corpid + "&corpsecret=" + corpsecret;
             string result = HttpHelper.HttpGet(url);
-            JObject jsonObj = JObject.Parse(result);
+            //JsonObject jsonObj = JsonObject.Parse(result);
+            JsonObject jsonObj = JsonSerializer.Deserialize(result, SourceGenerationContext.Default.JsonObject);
             string errcode = jsonObj["errcode"].ToString();
             string errmsg = jsonObj["errmsg"].ToString();
             string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
             if (errcode == "0" && errmsg == "ok")
             {
                 string access_token = jsonObj["access_token"].ToString();
-                JObject obj = new JObject();
-                JObject obj1 = new JObject();
+                JsonObject obj = new JsonObject();
+                JsonObject obj1 = new JsonObject();
                 obj.Add("touser", "@all");
                 obj.Add("toparty", "");
                 obj.Add("totag", "");
@@ -62,7 +65,9 @@ namespace DbusSmsForward.SendMethod
                 obj.Add("duplicate_check_interval", 1800);
                 string msgurl = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + access_token;
                 string msgresult = HttpHelper.Post(msgurl, obj);
-                JObject jsonObjresult = JObject.Parse(msgresult);
+                //JsonObject jsonObjresult = JsonObject.Parse(msgresult);
+                //JsonObject jsonObjresult = JsonSerializer.Deserialize<JsonObject>(msgresult);
+                JsonObject jsonObjresult = JsonSerializer.Deserialize(msgresult, SourceGenerationContext.Default.JsonObject);
                 string errcode1 = jsonObjresult["errcode"].ToString();
                 string errmsg1 = jsonObjresult["errmsg"].ToString();
                 if (errcode1 == "0" && errmsg1 == "ok")

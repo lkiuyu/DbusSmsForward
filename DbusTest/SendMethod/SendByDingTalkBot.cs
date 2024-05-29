@@ -1,13 +1,12 @@
 ﻿using DbusSmsForward.Helper;
 using System.Configuration;
-using Newtonsoft.Json.Linq;
-using System.Buffers.Text;
 using System.Security.Cryptography;
-using System.Text.Encodings.Web;
 using System.Text;
 using System.Web;
 using DbusSmsForward.SMSModel;
 using DbusSmsForward.ProcessSmsContent;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace DbusSmsForward.SendMethod
 {
@@ -45,19 +44,20 @@ namespace DbusSmsForward.SendMethod
             string sign = addSign(timestamp, dingTalkSecret);
             url += $"&timestamp={timestamp}&sign={sign}";
 
-            JObject msgContent = new()
+            JsonObject msgContent = new()
             {
                 { "content", (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + "\n") + "短信转发\n" + body }
             };
 
-            JObject msgObj = new()
+            JsonObject msgObj = new()
             {
                 { "msgtype", "text" },
                 { "text", msgContent }
             };
 
             string resultResp = HttpHelper.Post(url, msgObj);
-            JObject jsonObjresult = JObject.Parse(resultResp);
+            //JObject jsonObjresult = JObject.Parse(resultResp);
+            JsonObject jsonObjresult = JsonSerializer.Deserialize(resultResp, SourceGenerationContext.Default.JsonObject);
             string errcode1 = jsonObjresult["errcode"].ToString();
             string errmsg1 = jsonObjresult["errmsg"].ToString();
             if (errcode1 == "0" && errmsg1 == "ok")
@@ -90,7 +90,8 @@ namespace DbusSmsForward.SendMethod
         }
         public static long ConvertDateTimeToInt(DateTime time)
         {
-            DateTime startTime = TimeZone.CurrentTimeZone.ToLocalTime(new DateTime(1970, 1, 1, 0, 0, 0, 0));
+            //DateTime startTime = TimeZone.CurrentTimeZone.ToLocalTime(new DateTime(1970, 1, 1, 0, 0, 0, 0));
+            DateTime startTime = TimeZoneInfo.ConvertTime(new DateTime(1970, 1, 1, 0, 0, 0, 0), TimeZoneInfo.Local);
             long t = (time.Ticks - startTime.Ticks) / 10000;   //除10000调整为13位      
             return t;
         }

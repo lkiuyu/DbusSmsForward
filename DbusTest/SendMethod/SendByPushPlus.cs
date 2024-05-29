@@ -1,8 +1,9 @@
 ﻿using DbusSmsForward.Helper;
 using DbusSmsForward.ProcessSmsContent;
 using DbusSmsForward.SMSModel;
-using Newtonsoft.Json.Linq;
 using System.Configuration;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace DbusSmsForward.SendMethod
 {
@@ -28,13 +29,14 @@ namespace DbusSmsForward.SendMethod
             string pushPlusUrl = "http://www.pushplus.plus/send/";
             string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
 
-            JObject obj = new JObject();
+            JsonObject obj = new JsonObject();
             obj.Add("token", pushPlusToken);
             obj.Add("title", (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr+" ") + "短信转发" + smsmodel.TelNumber);
             obj.Add("content", body);
             obj.Add("topic","");
             string msgresult = HttpHelper.Post(pushPlusUrl, obj);
-            JObject jsonObjresult = JObject.Parse(msgresult);
+            //JObject jsonObjresult = JObject.Parse(msgresult);
+            JsonObject jsonObjresult = JsonSerializer.Deserialize(msgresult, SourceGenerationContext.Default.JsonObject);
             string code = jsonObjresult["code"].ToString();
             string errmsg = jsonObjresult["msg"].ToString();
             if (code == "200")

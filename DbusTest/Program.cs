@@ -1,6 +1,5 @@
 ﻿using ModemManager1.DBus;
 using Tmds.DBus;
-using DbusSmsForward.SendMethod;
 using DbusSmsForward.ProcessUserChoise;
 using DbusSmsForward.ProcessUserSend;
 using DbusSmsForward.SMSModel;
