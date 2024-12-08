@@ -1,5 +1,4 @@
 ﻿using DbusSmsForward.Helper;
-using System.Configuration;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
@@ -7,6 +6,7 @@ using DbusSmsForward.SMSModel;
 using DbusSmsForward.ProcessSmsContent;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using DbusSmsForward.SettingModel;
 
 namespace DbusSmsForward.SendMethod
 {
@@ -16,31 +16,35 @@ namespace DbusSmsForward.SendMethod
 
         public static void SetupDingtalkBotMsg()
         {
-            string DingTalkAccessToken = ConfigurationManager.AppSettings["DingTalkAccessToken"];
-            string DingTalkSecret = ConfigurationManager.AppSettings["DingTalkSecret"];
+            appsettingsModel result = new appsettingsModel();
+            ConfigHelper.GetSettings(ref result);
+            string DingTalkAccessToken = result.appSettings.DingTalkConfig.DingTalkAccessToken;
+            string DingTalkSecret = result.appSettings.DingTalkConfig.DingTalkSecret;
 
             if (string.IsNullOrEmpty(DingTalkAccessToken) && string.IsNullOrEmpty(DingTalkSecret))
             {
-                Configuration cfa = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 Console.WriteLine("首次运行请输入钉钉机器人AccessToken：");
                 DingTalkAccessToken = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["DingTalkAccessToken"].Value = DingTalkAccessToken;
+                result.appSettings.DingTalkConfig.DingTalkAccessToken = DingTalkAccessToken;
                 Console.WriteLine("请输入钉钉机器人加签secret：");
                 DingTalkSecret = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["DingTalkSecret"].Value = DingTalkSecret;
-                cfa.Save();
+                result.appSettings.DingTalkConfig.DingTalkSecret = DingTalkSecret;
+                ConfigHelper.UpdateSettings(ref result);
             }
+            result = null;
         }
 
         public static void SendSms(SmsContentModel smsmodel, string body)
         {
-            ConfigurationManager.RefreshSection("appSettings");
-            string dingTalkAccessToken = ConfigurationManager.AppSettings["DingTalkAccessToken"];
-            string dingTalkSecret = ConfigurationManager.AppSettings["DingTalkSecret"];
+            appsettingsModel result = new appsettingsModel();
+            ConfigHelper.GetSettings(ref result);
+            string dingTalkAccessToken = result.appSettings.DingTalkConfig.DingTalkAccessToken;
+            string dingTalkSecret = result.appSettings.DingTalkConfig.DingTalkSecret;
+            result = null;
             string url = DING_TALK_BOT_URL + dingTalkAccessToken;
             string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
 
-            long timestamp = ConvertDateTimeToInt(DateTime.Now);
+            long timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             string sign = addSign(timestamp, dingTalkSecret);
             url += $"&timestamp={timestamp}&sign={sign}";
 
@@ -87,13 +91,6 @@ namespace DbusSmsForward.SendMethod
         public static string Base64Encrypt(string input, Encoding encode)
         {
             return Convert.ToBase64String(encode.GetBytes(input));
-        }
-        public static long ConvertDateTimeToInt(DateTime time)
-        {
-            //DateTime startTime = TimeZone.CurrentTimeZone.ToLocalTime(new DateTime(1970, 1, 1, 0, 0, 0, 0));
-            DateTime startTime = TimeZoneInfo.ConvertTime(new DateTime(1970, 1, 1, 0, 0, 0, 0), TimeZoneInfo.Local);
-            long t = (time.Ticks - startTime.Ticks) / 10000;   //除10000调整为13位      
-            return t;
         }
     }
 }

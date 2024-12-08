@@ -1,5 +1,6 @@
-﻿using DbusSmsForward.SMSModel;
-using System.Configuration;
+﻿using DbusSmsForward.Helper;
+using DbusSmsForward.SettingModel;
+using DbusSmsForward.SMSModel;
 using System.Text.RegularExpressions;
 
 namespace DbusSmsForward.ProcessSmsContent
@@ -46,8 +47,10 @@ namespace DbusSmsForward.ProcessSmsContent
         }
         public static bool JudgeSmsContentHasCode(string smscontent,out string newsmscontent)
         {
-            ConfigurationManager.RefreshSection("appSettings");
-            string codeKeyStr = ConfigurationManager.AppSettings["smsCodeKey"];
+            appsettingsModel result = new appsettingsModel();
+            ConfigHelper.GetSettings(ref result);
+            string codeKeyStr = result.appSettings.SmsCodeKey;
+            result = null;
             string[] flagStrList = {};
             try
             {

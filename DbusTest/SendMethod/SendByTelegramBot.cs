@@ -1,7 +1,7 @@
 ﻿using DbusSmsForward.Helper;
 using DbusSmsForward.ProcessSmsContent;
+using DbusSmsForward.SettingModel;
 using DbusSmsForward.SMSModel;
-using System.Configuration;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -11,21 +11,21 @@ namespace DbusSmsForward.SendMethod
     {
         public static void SetupTGBotInfo()
         {
-            string TGBotToken = ConfigurationManager.AppSettings["TGBotToken"];
-            string TGBotChatID = ConfigurationManager.AppSettings["TGBotChatID"];
-            string IsEnableCustomTGBotApi = ConfigurationManager.AppSettings["IsEnableCustomTGBotApi"];
-            string CustomTGBotApi = ConfigurationManager.AppSettings["CustomTGBotApi"];
-
+            appsettingsModel result = new appsettingsModel();
+            ConfigHelper.GetSettings(ref result);
+            string TGBotToken = result.appSettings.TGBotConfig.TGBotToken;
+            string TGBotChatID = result.appSettings.TGBotConfig.TGBotChatID;
+            string IsEnableCustomTGBotApi = result.appSettings.TGBotConfig.IsEnableCustomTGBotApi;
+            string CustomTGBotApi = result.appSettings.TGBotConfig.CustomTGBotApi;
 
             if (string.IsNullOrEmpty(TGBotToken) && string.IsNullOrEmpty(TGBotChatID)&& string.IsNullOrEmpty(IsEnableCustomTGBotApi))
             {
-                Configuration cfa = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 Console.WriteLine("首次运行请输入TG机器人Token：");
                 TGBotToken = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["TGBotToken"].Value = TGBotToken;
+                result.appSettings.TGBotConfig.TGBotToken = TGBotToken;
                 Console.WriteLine("请输入机器人要转发到的ChatId");
                 TGBotChatID = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["TGBotChatID"].Value = TGBotChatID;
+                result.appSettings.TGBotConfig.TGBotChatID = TGBotChatID;
 
                 string customApiEnableInput=string.Empty;
                 do
@@ -36,27 +36,31 @@ namespace DbusSmsForward.SendMethod
                 if(customApiEnableInput=="1")
                 {
                     IsEnableCustomTGBotApi = "true";
-                    cfa.AppSettings.Settings["IsEnableCustomTGBotApi"].Value = IsEnableCustomTGBotApi;
+                    result.appSettings.TGBotConfig.IsEnableCustomTGBotApi = IsEnableCustomTGBotApi;
                     Console.WriteLine("请输入机器人自定义api(格式https://xxx.abc.com)");
                     CustomTGBotApi= Console.ReadLine().Trim();
-                    cfa.AppSettings.Settings["CustomTGBotApi"].Value = CustomTGBotApi;
+                    result.appSettings.TGBotConfig.CustomTGBotApi = CustomTGBotApi;
                 }
                 else
                 {
                     IsEnableCustomTGBotApi = "false";
-                    cfa.AppSettings.Settings["IsEnableCustomTGBotApi"].Value = IsEnableCustomTGBotApi;
+                    result.appSettings.TGBotConfig.IsEnableCustomTGBotApi = IsEnableCustomTGBotApi;
                 }
-                cfa.Save();
+                ConfigHelper.UpdateSettings(ref result);
             }
+            result = null;
+
         }
 
         public static void SendSms(SmsContentModel smsmodel, string body)
         {
-            ConfigurationManager.RefreshSection("appSettings");
-            string TGBotToken = ConfigurationManager.AppSettings["TGBotToken"];
-            string TGBotChatID = ConfigurationManager.AppSettings["TGBotChatID"];
-            string IsEnableCustomTGBotApi = ConfigurationManager.AppSettings["IsEnableCustomTGBotApi"];
-            string CustomTGBotApi = ConfigurationManager.AppSettings["CustomTGBotApi"];
+            appsettingsModel result = new appsettingsModel();
+            ConfigHelper.GetSettings(ref result);
+            string TGBotToken = result.appSettings.TGBotConfig.TGBotToken;
+            string TGBotChatID = result.appSettings.TGBotConfig.TGBotChatID;
+            string IsEnableCustomTGBotApi = result.appSettings.TGBotConfig.IsEnableCustomTGBotApi;
+            string CustomTGBotApi = result.appSettings.TGBotConfig.CustomTGBotApi;
+            result = null;
             string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
 
             string url = "";
@@ -71,10 +75,9 @@ namespace DbusSmsForward.SendMethod
             url+= "/bot" + TGBotToken + "/sendMessage?chat_id=" + TGBotChatID + "&text=";
             url += System.Web.HttpUtility.UrlEncode((string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + "\n") + "短信转发\n" + body);
             string msgresult = HttpHelper.HttpGet(url);
-            //JsonObject jsonObjresult = JObject.Parse(msgresult);
             JsonObject jsonObjresult = JsonSerializer.Deserialize(msgresult, SourceGenerationContext.Default.JsonObject);
             string status = jsonObjresult["ok"].ToString();
-            if (status == "True")
+            if (status.ToLower() == "true")
             {
                 Console.WriteLine("TGBot转发成功");
             }

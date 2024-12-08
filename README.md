@@ -43,9 +43,19 @@ sudo ./DbusSmsForward -fD
 sudo ./DbusSmsForward -fB
 跳过运行模式选择直接进入Bark转发模式
 
+输入 
+sudo ./DbusSmsForward -fE -fP -fD 
+可同时将接收的短信转发到email、pushplus和钉钉机器人，转发哪几个渠道取决于你添加的-f*指令
+
 输入
 sudo ./DbusSmsForward -sS
 跳过运行模式选择直接进入短信发送界面
+
+# 编译linux-arm64的native aot版本
+拉取最新源码，进入程序根目录，使用docker进行交叉编译
+docker build --pull -t cross-build-arm64 -f Dockerfile.cross-build-x64-arm64 .
+docker run --rm -it -v $(pwd):/source -w /source cross-build-arm64 dotnet publish -a arm64 -o app-arm64 -p:SysRoot=/crossrootfs/arm64 -p:LinkerFlavor=lld
+
 
 # 参考
 1. [ModemManager API document](https://www.freedesktop.org/software/ModemManager/api/latest/)

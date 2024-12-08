@@ -3,24 +3,25 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
 	<RuntimeIdentifiers>linux-musl-arm64</RuntimeIdentifiers>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
 	<PublishAot>true</PublishAot>
+	<InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="runtime.linux-arm64.Microsoft.DotNet.ILCompiler" Version="8.0.6" />
-    <PackageReference Include="runtime.linux-musl-arm64.Microsoft.DotNet.ILCompiler" Version="8.0.6" />
-    <PackageReference Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="8.0.6" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
-    <PackageReference Include="System.Text.Json" Version="8.0.3" />
-    <PackageReference Include="Tmds.DBus" Version="0.18.0" />
+    <PackageReference Include="runtime.linux-arm64.Microsoft.DotNet.ILCompiler" Version="9.0.0" />
+    <PackageReference Include="runtime.linux-musl-arm64.Microsoft.DotNet.ILCompiler" Version="9.0.0" />
+    <PackageReference Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="9.0.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="App.config">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

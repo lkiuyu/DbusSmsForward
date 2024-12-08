@@ -1,7 +1,7 @@
 ﻿using DbusSmsForward.Helper;
 using DbusSmsForward.ProcessSmsContent;
+using DbusSmsForward.SettingModel;
 using DbusSmsForward.SMSModel;
-using System.Configuration;
 using System.Text.Json;
 
 namespace DbusSmsForward.SendMethod
@@ -10,29 +10,33 @@ namespace DbusSmsForward.SendMethod
     {
         public static void SetupBarkInfo()
         {
-            string BarkUrl = ConfigurationManager.AppSettings["BarkUrl"];
-            string BrakKey = ConfigurationManager.AppSettings["BrakKey"];
+            appsettingsModel result = new appsettingsModel();
+            ConfigHelper.GetSettings(ref result);
+            string BarkUrl = result.appSettings.BarkConfig.BarkUrl;
+            string BrakKey = result.appSettings.BarkConfig.BrakKey;
 
             if (string.IsNullOrEmpty(BarkUrl) && string.IsNullOrEmpty(BrakKey))
             {
-                Configuration cfa = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 Console.WriteLine("首次运行请输入Bark服务器地址：");
                 BarkUrl = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["BarkUrl"].Value = BarkUrl;
+                result.appSettings.BarkConfig.BarkUrl = BarkUrl;
                 Console.WriteLine("首次运行请输入Bark推送key");
                 BrakKey = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["BrakKey"].Value = BrakKey;
-                cfa.Save();
+                result.appSettings.BarkConfig.BrakKey = BrakKey;
+                ConfigHelper.UpdateSettings(ref result);
             }
+            result = null;
         }
 
         public static void SendSms(SmsContentModel smsmodel, string body)
         {
             try
             {
-                ConfigurationManager.RefreshSection("appSettings");
-                string BarkUrl = ConfigurationManager.AppSettings["BarkUrl"];
-                string BrakKey = ConfigurationManager.AppSettings["BrakKey"];
+                appsettingsModel result = new appsettingsModel();
+                ConfigHelper.GetSettings(ref result);
+                string BarkUrl = result.appSettings.BarkConfig.BarkUrl;
+                string BrakKey = result.appSettings.BarkConfig.BrakKey;
+                result = null;
                 string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
                 string url = BarkUrl + "/" + BrakKey + "/";
                 url += System.Web.HttpUtility.UrlEncode(body);

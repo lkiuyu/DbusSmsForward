@@ -1,10 +1,9 @@
 ﻿using DbusSmsForward.Helper;
 using DbusSmsForward.ProcessSmsContent;
+using DbusSmsForward.SettingModel;
 using DbusSmsForward.SMSModel;
-using System.Configuration;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 
 namespace DbusSmsForward.SendMethod
 {
@@ -12,34 +11,41 @@ namespace DbusSmsForward.SendMethod
     {
         public static void SetupWeComInfo()
         {
-            string corpid = ConfigurationManager.AppSettings["WeChatQYID"];
-            string appsecret = ConfigurationManager.AppSettings["WeChatQYApplicationSecret"];
-            string appid = ConfigurationManager.AppSettings["WeChatQYApplicationID"];
+            appsettingsModel result = new appsettingsModel();
+            ConfigHelper.GetSettings(ref result);
+            string corpid = result.appSettings.WeComApplicationConfig.WeChatQYID;
+            string appsecret = result.appSettings.WeComApplicationConfig.WeChatQYApplicationSecret;
+            string appid = result.appSettings.WeComApplicationConfig.WeChatQYApplicationID;
+            
             if (string.IsNullOrEmpty(corpid) && string.IsNullOrEmpty(appsecret) && string.IsNullOrEmpty(appid))
             {
-                Configuration cfa = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 Console.WriteLine("首次运行请输入企业ID：");
                 corpid = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["WeChatQYID"].Value = corpid;
+                result.appSettings.WeComApplicationConfig.WeChatQYID = corpid;
 
                 Console.WriteLine("请输入自建应用ID：");
                 appid = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["WeChatQYApplicationID"].Value = appid;
+                result.appSettings.WeComApplicationConfig.WeChatQYApplicationID = appid;
 
                 Console.WriteLine("请输入自建应用密钥：");
                 appsecret = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["WeChatQYApplicationSecret"].Value = appsecret;
+                result.appSettings.WeComApplicationConfig.WeChatQYApplicationSecret = appsecret;
 
-                cfa.Save();
+                ConfigHelper.UpdateSettings(ref result);
             }
+            result = null;
+
         }
 
         public static void SendSms(SmsContentModel smsmodel, string body)
         {
-            ConfigurationManager.RefreshSection("appSettings");
-            string corpid = ConfigurationManager.AppSettings["WeChatQYID"];
-            string corpsecret = ConfigurationManager.AppSettings["WeChatQYApplicationSecret"];
-            int agentid =Convert.ToInt32(ConfigurationManager.AppSettings["WeChatQYApplicationID"]);
+            appsettingsModel configResult = new appsettingsModel();
+            ConfigHelper.GetSettings(ref configResult);
+            string corpid = configResult.appSettings.WeComApplicationConfig.WeChatQYID;
+            string corpsecret = configResult.appSettings.WeComApplicationConfig.WeChatQYApplicationSecret;
+            string agentid = configResult.appSettings.WeComApplicationConfig.WeChatQYApplicationID;
+            configResult = null;
+
             string url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=" + corpid + "&corpsecret=" + corpsecret;
             string result = HttpHelper.HttpGet(url);
             //JsonObject jsonObj = JsonObject.Parse(result);

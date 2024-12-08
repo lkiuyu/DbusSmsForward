@@ -1,125 +1,87 @@
-﻿using ModemManager1.DBus;
-using Tmds.DBus;
-using DbusSmsForward.ProcessUserChoise;
-using DbusSmsForward.ProcessUserSend;
+﻿using DbusSmsForward.ProcessUserChoise;
 using DbusSmsForward.SMSModel;
+using DbusSmsForward.ModemHelper;
 
+
+ModemManagerHelper.SetModemObjectPathList();
+ModemManagerHelper.WatchModems();
 string startGuideChoiseNum = "";
-string sendMethodGuideChoiseNum = "";
-
+List<string> sendMethodGuideChoiseNumArray= new List<string>();
 foreach (var s1 in args)
 {
     if (s1 == "-fE")
     {
         startGuideChoiseNum = "1";
-        sendMethodGuideChoiseNum = "1";
+        sendMethodGuideChoiseNumArray.Add("1");
     }
     else if (s1 == "-fP")
     {
         startGuideChoiseNum = "1";
-        sendMethodGuideChoiseNum = "2";
+        sendMethodGuideChoiseNumArray.Add("2");
     }
     else if (s1 == "-fW")
     {
         startGuideChoiseNum = "1";
-        sendMethodGuideChoiseNum = "3";
+        sendMethodGuideChoiseNumArray.Add("3");
     }
     else if (s1 == "-fT")
     {
         startGuideChoiseNum = "1";
-        sendMethodGuideChoiseNum = "4";
+        sendMethodGuideChoiseNumArray.Add("4");
     }
     else if (s1 == "-fD")
     {
         startGuideChoiseNum = "1";
-        sendMethodGuideChoiseNum = "5";
+        sendMethodGuideChoiseNumArray.Add("5");
     }
     else if (s1 == "-fB")
     {
         startGuideChoiseNum = "1";
-        sendMethodGuideChoiseNum = "6";
+        sendMethodGuideChoiseNumArray.Add("6");
     }
     else if (s1 == "-sS")
     {
         startGuideChoiseNum = "2";
     }
-    break;
 }
 string StartGuideResult = ProcessChoise.onStartGuide(startGuideChoiseNum);
 if (StartGuideResult == "1")
 {
-    string sendMethodGuideResult = ProcessChoise.sendMethodGuide(sendMethodGuideChoiseNum);
+    List<Action<SmsContentModel, string>> actionList=  ProcessChoise.sendMethodGuide(sendMethodGuideChoiseNumArray);
+    ModemManagerHelper.SetSendMethodList(actionList);
     Console.WriteLine("正在运行. 按下 Ctrl-C 停止.");
+    var tcs = new TaskCompletionSource<bool>();
+    var task = tcs.Task;
+    await task;
 
-    Task.Run(async () =>
-    {
-        using (var connection = new Connection(Address.System))
-        {
-            await connection.ConnectAsync();
-            var objectPath = new ObjectPath("/org/freedesktop/ModemManager1/Modem/0");
-            var service = "org.freedesktop.ModemManager1";
-            var imsg = connection.CreateProxy<IMessaging>(service, objectPath);
-            await imsg.WatchAddedAsync(
-             async change =>
-             {
-                 if (change.received)
-                 {
-                     Console.WriteLine(change.path);
-                     var isms = connection.CreateProxy<ISms>("org.freedesktop.ModemManager1", change.path);
-                     SmsContentModel smsmodel = new SmsContentModel();
-                     smsmodel.TelNumber = await isms.GetNumberAsync();
-                     smsmodel.SmsDate = (await isms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
-                     string smscontent = "";
-                     do
-                     {
-                         smscontent = "";
-                         smscontent = await isms.GetTextAsync();
-                     } while (string.IsNullOrEmpty(smscontent));
-                     smsmodel.SmsContent = smscontent;
-                     ProcessSend.sendSms(sendMethodGuideResult, smsmodel);
-                 }
-             }
-         );
-            await Task.Delay(int.MaxValue);
-        }
-    }).Wait();
 }
 else if(StartGuideResult == "2")
 {
-    using (var connection = new Connection(Address.System))
+    string telNumber = string.Empty, smsText=string.Empty;
+    sendSms(ref telNumber,ref smsText);
+    Console.WriteLine("短信创建成功，是否发送？(1.发送短信,其他按键退出程序)");
+    string sendChoise = Console.ReadLine();
+    if (sendChoise == "1")
     {
-        await connection.ConnectAsync();
-        var objectPath = new ObjectPath("/org/freedesktop/ModemManager1/Modem/0");
-        var service = "org.freedesktop.ModemManager1";
-        var imsg = connection.CreateProxy<IMessaging>(service, objectPath);
-        var sendsmsPath=await imsg.CreateAsync(sendSms());
-        Console.WriteLine("短信创建成功，是否发送？(1.发送短信,其他按键退出程序)");
-        string sendChoise=Console.ReadLine();
-        if(sendChoise == "1")
+        if (ModemManagerHelper.SendSms(telNumber, smsText).Result)
         {
-            var isms = connection.CreateProxy<ISms>("org.freedesktop.ModemManager1", sendsmsPath);
-            await isms.SendAsync();
             Console.WriteLine("短信已发送");
         }
         else
         {
-            await imsg.DeleteAsync(sendsmsPath);
-            Console.WriteLine("短信缓存已清理，按回车返回运行模式选择");
-            Console.ReadLine();
-            
+            Console.WriteLine("短信发送失败");
         }
     }
 }
 
 
 
-Dictionary<string, object> sendSms()
+void sendSms(ref string telNumber,ref string smsText)
 {
     Console.WriteLine("请输入收信号码：");
-    string telNumber = Console.ReadLine();
+    telNumber = Console.ReadLine();
     Console.WriteLine("请输入短信内容");
-    string smsText = Console.ReadLine();
-    return new Dictionary<string, object> { { "text", smsText }, { "number", telNumber } };
+    smsText = Console.ReadLine();
 
 }
 

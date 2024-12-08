@@ -1,7 +1,7 @@
 ﻿using DbusSmsForward.Helper;
 using DbusSmsForward.ProcessSmsContent;
+using DbusSmsForward.SettingModel;
 using DbusSmsForward.SMSModel;
-using System.Configuration;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -11,21 +11,26 @@ namespace DbusSmsForward.SendMethod
     {
         public static void SetupPushPlusInfo()
         {
-            string pushPlusToken = ConfigurationManager.AppSettings["pushPlusToken"];
+            appsettingsModel result = new appsettingsModel();
+            ConfigHelper.GetSettings(ref result);
+            string pushPlusToken = result.appSettings.PushPlusConfig.pushPlusToken;
             if (string.IsNullOrEmpty(pushPlusToken))
             {
-                Configuration cfa = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 Console.WriteLine("首次运行请输入PushPlusToken：");
                 pushPlusToken = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["pushPlusToken"].Value = pushPlusToken;
-                cfa.Save();
+                result.appSettings.PushPlusConfig.pushPlusToken = pushPlusToken;
+                ConfigHelper.UpdateSettings(ref result);
             }
+            result = null;
+
         }
 
         public static void SendSms(SmsContentModel smsmodel, string body)
         {
-            ConfigurationManager.RefreshSection("appSettings");
-            string pushPlusToken = ConfigurationManager.AppSettings["pushPlusToken"];
+            appsettingsModel result = new appsettingsModel();
+            ConfigHelper.GetSettings(ref result);
+            string pushPlusToken = result.appSettings.PushPlusConfig.pushPlusToken;
+            result = null;
             string pushPlusUrl = "http://www.pushplus.plus/send/";
             string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
 

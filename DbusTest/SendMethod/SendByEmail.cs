@@ -1,8 +1,9 @@
 ﻿using System.Net.Mail;
 using System.Net;
-using System.Configuration;
 using DbusSmsForward.SMSModel;
 using DbusSmsForward.ProcessSmsContent;
+using DbusSmsForward.Helper;
+using DbusSmsForward.SettingModel;
 
 namespace DbusSmsForward.SendMethod
 {
@@ -10,49 +11,53 @@ namespace DbusSmsForward.SendMethod
     {
         public static void SetupEmailInfo()
         {
-            string smtpHost = ConfigurationManager.AppSettings["smtpHost"];
-            string smtpPort = ConfigurationManager.AppSettings["smtpPort"];
-            string emailKey = ConfigurationManager.AppSettings["emailKey"];
-            string sendEmial = ConfigurationManager.AppSettings["sendEmial"];
-            string reciveEmial = ConfigurationManager.AppSettings["reciveEmial"];
+            appsettingsModel result = new appsettingsModel();
+            ConfigHelper.GetSettings(ref result);
+            string smtpHost = result.appSettings.EmailConfig.smtpHost;
+            string smtpPort = result.appSettings.EmailConfig.smtpPort;
+            string emailKey = result.appSettings.EmailConfig.emailKey;
+            string sendEmial = result.appSettings.EmailConfig.sendEmial;
+            string reciveEmial = result.appSettings.EmailConfig.reciveEmial;
             if (string.IsNullOrEmpty(smtpHost) && string.IsNullOrEmpty(smtpPort) && string.IsNullOrEmpty(emailKey) && string.IsNullOrEmpty(sendEmial) && string.IsNullOrEmpty(reciveEmial))
             {
-                Configuration cfa = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 Console.WriteLine("首次运行请输入邮箱转发相关配置信息\n请输入smtp地址：");
                 smtpHost = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["smtpHost"].Value = smtpHost;
+                result.appSettings.EmailConfig.smtpHost = smtpHost;
 
                 Console.WriteLine("请输入smtp端口：");
                 smtpPort = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["smtpPort"].Value = smtpPort;
+                result.appSettings.EmailConfig.smtpPort = smtpPort;
 
                 Console.WriteLine("请输入邮箱密钥：");
                 emailKey = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["emailKey"].Value = emailKey;
+                result.appSettings.EmailConfig.emailKey = emailKey;
 
                 Console.WriteLine("请输入发件邮箱：");
                 sendEmial = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["sendEmial"].Value = sendEmial;
+                result.appSettings.EmailConfig.sendEmial = sendEmial;
 
                 Console.WriteLine("请输入收件邮箱：");
                 reciveEmial = Console.ReadLine().Trim();
-                cfa.AppSettings.Settings["reciveEmial"].Value = reciveEmial;
+                result.appSettings.EmailConfig.reciveEmial = reciveEmial;
 
-                cfa.Save();
-
+                ConfigHelper.UpdateSettings(ref result);
             }
+            result = null;
+
         }
 
 
         public static void SendSms(SmsContentModel smsmodel, string body)
         {
-            ConfigurationManager.RefreshSection("appSettings");
-            string smtpHost = ConfigurationManager.AppSettings["smtpHost"];
-            string smtpPort = ConfigurationManager.AppSettings["smtpPort"];
-            string emailKey = ConfigurationManager.AppSettings["emailKey"];
-            string sendEmial = ConfigurationManager.AppSettings["sendEmial"];
-            string reciveEmial = ConfigurationManager.AppSettings["reciveEmial"];
 
+            appsettingsModel result = new appsettingsModel();
+            ConfigHelper.GetSettings(ref result);
+            string smtpHost = result.appSettings.EmailConfig.smtpHost;
+            string smtpPort = result.appSettings.EmailConfig.smtpPort;
+            string emailKey = result.appSettings.EmailConfig.emailKey;
+            string sendEmial = result.appSettings.EmailConfig.sendEmial;
+            string reciveEmial = result.appSettings.EmailConfig.reciveEmial;
+            result = null;
             MailAddress to = new MailAddress(reciveEmial);
             MailAddress from = new MailAddress(sendEmial, "SMSForwad");
             MailMessage mm = new MailMessage(from, to);

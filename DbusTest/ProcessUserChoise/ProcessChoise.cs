@@ -1,4 +1,6 @@
 ﻿using DbusSmsForward.SendMethod;
+using DbusSmsForward.SMSModel;
+using System.Collections.Generic;
 
 namespace DbusSmsForward.ProcessUserChoise
 {
@@ -23,54 +25,81 @@ namespace DbusSmsForward.ProcessUserChoise
 
         }
 
-        public static string sendMethodGuide(string chooseOption)
+        public static List<Action<SmsContentModel, string>> sendMethodGuide(List<string> chooseOptions)
         {
-            if(string.IsNullOrEmpty(chooseOption))
+            List<Action<SmsContentModel, string>> actions = new List<Action<SmsContentModel, string>>();
+            if(chooseOptions.Count() == 0)
             {
-                Console.WriteLine("请选择转发渠道：1.邮箱转发，2.pushplus转发，3.企业微信转发，4.TG机器人转发，5.钉钉转发，6.Bark转发");
-                chooseOption = Console.ReadLine();
+                Console.WriteLine("请选择转发渠道：1.邮箱转发，2.pushplus转发，3.企业微信转发，4.TG机器人转发，5.钉钉转发，6.Bark转发，同时转发多渠道请以空格分割编号（举例：1 2 3 5）");
+                chooseOptions.Add(Console.ReadLine());
+                return sendMethodGuide(chooseOptions);
             }
-            if (chooseOption == "1" || chooseOption == "2" || chooseOption == "3" || chooseOption == "4" || chooseOption == "5" || chooseOption == "6")
+            else if (chooseOptions.Count() >= 1)
             {
-                if (chooseOption == "1")
+                
+                if (chooseOptions.Count() == 1 && chooseOptions[0].IndexOf(" ") > -1)
                 {
-                    SendByEmail.SetupEmailInfo();
-                    return "1";
-                }
-                else if (chooseOption == "2")
-                {
-                    SendByPushPlus.SetupPushPlusInfo();
-                    return "2";
-                }
-                else if (chooseOption == "3")
-                {
-                    SendByWeComApplication.SetupWeComInfo();
-                    return "3";
-                }
-                else if (chooseOption == "4")
-                {
-                    SendByTelegramBot.SetupTGBotInfo();
-                    return "4";
-                }
-                else if(chooseOption == "5")
-                {
-                    SendByDingTalkBot.SetupDingtalkBotMsg();
-                    return "5";
-                }
-                else if (chooseOption == "6")
-                {
-                    SendByBark.SetupBarkInfo();
-                    return "6";
+                    string chooseOption = chooseOptions[0];
+                    List<string> newChooseOptions = chooseOption.Split(" ").ToList();
+                    return sendMethodGuide(newChooseOptions);
                 }
                 else
                 {
-                    return "";
+                    if (JudgeChooseIsValid(chooseOptions,true))
+                    {
+                        foreach(var chooseOption in chooseOptions)
+                        {
+                            if (chooseOption == "1")
+                            {
+                                SendByEmail.SetupEmailInfo();
+                                actions.Add(SendByEmail.SendSms);
+                            }
+                            if (chooseOption == "2")
+                            {
+                                SendByPushPlus.SetupPushPlusInfo();
+                                actions.Add(SendByPushPlus.SendSms);
+                            }
+                            if (chooseOption == "3")
+                            {
+                                SendByWeComApplication.SetupWeComInfo();
+                                actions.Add(SendByWeComApplication.SendSms);
+                            }
+                            if (chooseOption == "4")
+                            {
+                                SendByTelegramBot.SetupTGBotInfo();
+                                actions.Add(SendByTelegramBot.SendSms);
+                            }
+                            if (chooseOption == "5")
+                            {
+                                SendByDingTalkBot.SetupDingtalkBotMsg();
+                                actions.Add(SendByDingTalkBot.SendSms);
+                            }
+                            if (chooseOption == "6")
+                            {
+                                SendByBark.SetupBarkInfo();
+                                actions.Add(SendByBark.SendSms);
+                            }
+                        }
+                        return actions;
+                    }
+                    else
+                    {
+                        Console.WriteLine("请输入1或2或3或4或5或6");
+                        return sendMethodGuide(new List<string>());
+                    }
                 }
+            }
+            return actions;
+        }
+        public static bool JudgeChooseIsValid(List<string> chooseOptions,bool isCheckAll=false)
+        {
+            if (isCheckAll)
+            {
+                return chooseOptions.Where(a => a == "1" || a == "2" || a == "3" || a == "4" || a == "5" || a == "6").Count() == chooseOptions.Count();
             }
             else
             {
-                Console.WriteLine("请输入1或2或3或4或5或6");
-                return sendMethodGuide("");
+                return chooseOptions.Where(a => a == "1" || a == "2" || a == "3" || a == "4" || a == "5" || a == "6").Count() > 0;
             }
         }
 
