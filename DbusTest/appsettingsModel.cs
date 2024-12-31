@@ -20,6 +20,7 @@ namespace DbusSmsForward.SettingModel
         public Wecomapplicationconfig WeComApplicationConfig { get; set; }
         public TGBotConfig TGBotConfig { get; set; }
         public string SmsCodeKey { get; set; }
+        public string ForwardIgnoreStorageType { get; set; }
     }
 
     public class Emailconfig

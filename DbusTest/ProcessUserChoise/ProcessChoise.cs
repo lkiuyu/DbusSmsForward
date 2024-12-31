@@ -27,7 +27,6 @@ namespace DbusSmsForward.ProcessUserChoise
 
         public static List<Action<SmsContentModel, string>> sendMethodGuide(List<string> chooseOptions)
         {
-            List<Action<SmsContentModel, string>> actions = new List<Action<SmsContentModel, string>>();
             if(chooseOptions.Count() == 0)
             {
                 Console.WriteLine("请选择转发渠道：1.邮箱转发，2.pushplus转发，3.企业微信转发，4.TG机器人转发，5.钉钉转发，6.Bark转发，同时转发多渠道请以空格分割编号（举例：1 2 3 5）");
@@ -47,7 +46,8 @@ namespace DbusSmsForward.ProcessUserChoise
                 {
                     if (JudgeChooseIsValid(chooseOptions,true))
                     {
-                        foreach(var chooseOption in chooseOptions)
+                        List<Action<SmsContentModel, string>> actions = new List<Action<SmsContentModel, string>>();
+                        foreach (var chooseOption in chooseOptions)
                         {
                             if (chooseOption == "1")
                             {
@@ -89,7 +89,7 @@ namespace DbusSmsForward.ProcessUserChoise
                     }
                 }
             }
-            return actions;
+            return new List<Action<SmsContentModel, string>>();
         }
         public static bool JudgeChooseIsValid(List<string> chooseOptions,bool isCheckAll=false)
         {

@@ -1,4 +1,5 @@
-﻿using DbusSmsForward.SMSModel;
+﻿using DbusSmsForward.Helper;
+using DbusSmsForward.SMSModel;
 using ModemManager1.DBus;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -34,7 +35,7 @@ namespace DbusSmsForward.ModemHelper
                 }
             }
         }
-        
+
         public static void SetNowUsedModemPath(string modemObjectPathNowUse)
         {
             _modemObjectPathNowUse = modemObjectPathNowUse;
@@ -53,9 +54,9 @@ namespace DbusSmsForward.ModemHelper
         }
 
 
-        public static bool JudgeNowModemIsAvaliable(ref int statusCode,ref string errorMsg)
+        public static bool JudgeNowModemIsAvaliable(ref int statusCode, ref string errorMsg)
         {
-            if (!string.IsNullOrEmpty(_modemObjectPathNowUse)&& _modemObjectPathList.Count==1)
+            if (!string.IsNullOrEmpty(_modemObjectPathNowUse) && _modemObjectPathList.Count == 1)
             {
                 return true;
             }
@@ -64,7 +65,7 @@ namespace DbusSmsForward.ModemHelper
                 statusCode = 1;
                 return true;
             }
-            else if (_modemObjectPathList.Count>1)
+            else if (_modemObjectPathList.Count > 1)
             {
                 statusCode = 2;
                 errorMsg = "搜索到有多个可用modem，请选择一个默认使用";
@@ -77,7 +78,7 @@ namespace DbusSmsForward.ModemHelper
                 return false;
             }
         }
-        
+
         public static void WatchModems()
         {
             try
@@ -173,26 +174,30 @@ namespace DbusSmsForward.ModemHelper
                                     var service = new ModemManager1Service(connection, baseService);
                                     var sms = service.CreateSms(smsPath);
                                     var smsState = await sms.GetStateAsync();
-                                    if (smsState==2|| smsState==3)
+                                    if (smsState == 2 || smsState == 3)
                                     {
-                                        string telNum = await sms.GetNumberAsync();
-                                        string smsDate = (await sms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
-                                        do
+                                        uint Storage = await sms.GetStorageAsync();
+                                        if (!ConfigHelper.JudgeIsForwardIgnore(Storage))
                                         {
-                                            smsState = await sms.GetStateAsync();
-                                            Thread.Sleep(100);
-                                        } while (smsState == 2);
-                                        string smsContent = await sms.GetTextAsync();
-                                        SmsContentModel smsmodel = new SmsContentModel();
-                                        smsmodel.TelNumber = telNum;
-                                        smsmodel.SmsDate = smsDate;
-                                        smsmodel.SmsContent = smsContent;
-                                        string body = "发信电话:" + telNum + "\n" + "时间:" + smsDate + "\n" + "短信内容:" + smsContent;
-                                        if (smsSendMethodList.Count()>0)
-                                        {
-                                            foreach (var action in smsSendMethodList)
+                                            string telNum = await sms.GetNumberAsync();
+                                            string smsDate = (await sms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
+                                            do
                                             {
-                                                action.Invoke(smsmodel, body);
+                                                smsState = await sms.GetStateAsync();
+                                                Thread.Sleep(100);
+                                            } while (smsState == 2);
+                                            string smsContent = await sms.GetTextAsync();
+                                            SmsContentModel smsmodel = new SmsContentModel();
+                                            smsmodel.TelNumber = telNum;
+                                            smsmodel.SmsDate = smsDate;
+                                            smsmodel.SmsContent = smsContent;
+                                            string body = "发信电话:" + telNum + "\n" + "时间:" + smsDate + "\n" + "短信内容:" + smsContent;
+                                            if (smsSendMethodList.Count() > 0)
+                                            {
+                                                foreach (var action in smsSendMethodList)
+                                                {
+                                                    action.Invoke(smsmodel, body);
+                                                }
                                             }
                                         }
                                     }
@@ -221,7 +226,7 @@ namespace DbusSmsForward.ModemHelper
             }
         }
 
-        public static async Task<bool> SendSms(string telNum,string smsContent)
+        public static async Task<bool> SendSms(string telNum, string smsContent)
         {
             try
             {
@@ -236,7 +241,7 @@ namespace DbusSmsForward.ModemHelper
                     return true;
                 }
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 Console.WriteLine(ex);
                 return false;
@@ -283,7 +288,7 @@ namespace DbusSmsForward.ModemHelper
             }
         }
 
-        public static async Task<string> GetManufacturer(string? path=null)
+        public static async Task<string> GetManufacturer(string? path = null)
         {
             try
             {
@@ -299,7 +304,8 @@ namespace DbusSmsForward.ModemHelper
                     return Manufacturer;
                 }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 Console.WriteLine(ex);
                 return string.Empty;
             }
@@ -343,9 +349,9 @@ namespace DbusSmsForward.ModemHelper
                     var service = new ModemManager1Service(connection, baseService);
                     var modem = service.CreateModem(actUsePath);
                     var Ports = await modem.GetPortsAsync();
-                    foreach (var port in Ports) 
+                    foreach (var port in Ports)
                     {
-                        if (port.Item2==6)
+                        if (port.Item2 == 6)
                         {
                             return "/dev/" + port.Item1;
                         }
@@ -382,7 +388,7 @@ namespace DbusSmsForward.ModemHelper
                 return string.Empty;
             }
         }
-        
+
         public static async Task<string> GetRevision(string? path = null)
         {
             try
@@ -405,7 +411,7 @@ namespace DbusSmsForward.ModemHelper
                 return string.Empty;
             }
         }
-        
+
         public static async Task<string> GetSignalQuality(string? path = null)
         {
             try
@@ -417,7 +423,7 @@ namespace DbusSmsForward.ModemHelper
                     var service = new ModemManager1Service(connection, baseService);
                     var modem = service.CreateModem(actUsePath);
                     var SignalQuality = await modem.GetSignalQualityAsync();
-                    modem= null;
+                    modem = null;
                     service = null;
                     return SignalQuality.Item1.ToString();
                 }
@@ -428,7 +434,7 @@ namespace DbusSmsForward.ModemHelper
                 return string.Empty;
             }
         }
-        
+
         public static async Task<string[]> GetOwnNumbers(string? path = null)
         {
             try
@@ -485,7 +491,7 @@ namespace DbusSmsForward.ModemHelper
                     var modem = service.CreateModem(actUsePath);
                     var simpath = await modem.GetSimAsync();
                     var sim = service.CreateSim(simpath);
-                    var iccid= await sim.GetSimIdentifierAsync();
+                    var iccid = await sim.GetSimIdentifierAsync();
                     modem = null;
                     service = null;
                     return iccid;
@@ -520,7 +526,7 @@ namespace DbusSmsForward.ModemHelper
                 return string.Empty;
             }
         }
-        
+
         public static async Task<string> GetOperatorCode(string? path = null)
         {
             try
@@ -543,7 +549,7 @@ namespace DbusSmsForward.ModemHelper
                 return string.Empty;
             }
         }
-        
+
         public static async Task<string> GetOperatorName(string? path = null)
         {
             try
@@ -556,7 +562,7 @@ namespace DbusSmsForward.ModemHelper
                     var modem3gpp = service.CreateModem3gpp(actUsePath);
                     var OperatorName = await modem3gpp.GetOperatorNameAsync();
                     modem3gpp = null;
-                    service=null;
+                    service = null;
                     return OperatorName;
                 }
             }
@@ -570,9 +576,9 @@ namespace DbusSmsForward.ModemHelper
         public static bool RestartModem()
         {
             string qmiPath = GetQMIDevice().Result;
-            uint? simslot=GetPrimarySimSlot().Result;
-            if (simslot.HasValue) 
-            { 
+            uint? simslot = GetPrimarySimSlot().Result;
+            if (simslot.HasValue)
+            {
                 if (simslot.Value == 0)
                 {
                     simslot += 1;
@@ -590,9 +596,9 @@ namespace DbusSmsForward.ModemHelper
                     if (process != null)
                     {
                         string output = process.StandardOutput.ReadToEnd();
-                        string error=process.StandardError.ReadToEnd();
+                        string error = process.StandardError.ReadToEnd();
                         process.WaitForExit();
-                        if (process.ExitCode!=0)
+                        if (process.ExitCode != 0)
                         {
                             Console.WriteLine(error);
                             return false;

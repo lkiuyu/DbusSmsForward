@@ -1,18 +1,19 @@
 ﻿using DbusSmsForward.SettingModel;
+using System;
 using System.Text.Json;
 
 namespace DbusSmsForward.Helper
 {
     public static class ConfigHelper
     {
-        
+
         public static void GetSettings(ref appsettingsModel result)
         {
             string settinsgFileName = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
             if (File.Exists(settinsgFileName))
             {
                 var config = File.ReadAllText(settinsgFileName);
-                result= JsonSerializer.Deserialize(config, SourceGenerationContext.Default.appsettingsModel);
+                result = JsonSerializer.Deserialize(config, SourceGenerationContext.Default.appsettingsModel);
             }
         }
 
@@ -22,7 +23,45 @@ namespace DbusSmsForward.Helper
             string settinsgFileName = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
             File.WriteAllText(settinsgFileName, updatedJson);
         }
+
+        public static bool JudgeIsForwardIgnore(uint storage)
+        {
+            appsettingsModel result = new appsettingsModel();
+            GetSettings(ref result);
+            string forwardStorageType = result.appSettings.ForwardIgnoreStorageType;
+            result = null;
+            uint storageTypeNum = 100;
+            if (forwardStorageType == "unknown" && storage == 0)
+            {
+                return true;
+            }
+            else if (forwardStorageType == "sm" && storage == 1)
+            {
+                return true;
+            }
+            else if (forwardStorageType == "me" && storage == 2)
+            {
+                return true;
+            }
+            else if (forwardStorageType == "mt" && storage == 3)
+            {
+                return true;
+            }
+            else if (forwardStorageType == "sr" && storage == 4)
+            {
+                return true;
+            }
+            else if (forwardStorageType == "bm" && storage == 5)
+            {
+                return true;
+            }
+            else if (forwardStorageType == "ta" && storage == 6)
+            {
+                storageTypeNum = 6;
+            }
+            return false;
+        }
     }
 
-    
+
 }

@@ -58,6 +58,12 @@ docker build --pull -t cross-build-arm64 -f Dockerfile.cross-build-x64-arm64 .
 
 docker run --rm -it -v $(pwd):/source -w /source cross-build-arm64 dotnet publish -a arm64 -o app-arm64 -p:SysRoot=/crossrootfs/arm64 -p:LinkerFlavor=lld
 
+# 编译linux-musl-arm64的native aot版本
+拉取最新源码，进入程序根目录，使用docker进行交叉编译
+
+docker build --pull -t cross-build-arm64-musl -f Dockerfile.cross-build-x64-arm64-musl . 
+
+docker run --rm -it -v $(pwd):/source -w /source cross-build-arm64-musl dotnet publish -a musl-arm64 -o app-arm64-musl -p:SysRoot=/crossrootfs/arm64 -p:LinkerFlavor=lld
 
 # 参考
 1. [ModemManager API document](https://www.freedesktop.org/software/ModemManager/api/latest/)

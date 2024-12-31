@@ -18,7 +18,7 @@ namespace DbusSmsForward.SendMethod
             string IsEnableCustomTGBotApi = result.appSettings.TGBotConfig.IsEnableCustomTGBotApi;
             string CustomTGBotApi = result.appSettings.TGBotConfig.CustomTGBotApi;
 
-            if (string.IsNullOrEmpty(TGBotToken) && string.IsNullOrEmpty(TGBotChatID)&& string.IsNullOrEmpty(IsEnableCustomTGBotApi))
+            if (string.IsNullOrEmpty(TGBotToken) || string.IsNullOrEmpty(TGBotChatID) || string.IsNullOrEmpty(IsEnableCustomTGBotApi))
             {
                 Console.WriteLine("首次运行请输入TG机器人Token：");
                 TGBotToken = Console.ReadLine().Trim();
