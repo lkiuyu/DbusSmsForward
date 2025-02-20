@@ -27,6 +27,7 @@ namespace DbusSmsForward.SettingModel
     {
         public string smtpHost { get; set; }
         public string smtpPort { get; set; }
+        public string enableSSL { get; set; }
         public string emailKey { get; set; }
         public string sendEmial { get; set; }
         public string reciveEmial { get; set; }

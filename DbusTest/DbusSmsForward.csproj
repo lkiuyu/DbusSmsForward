@@ -11,11 +11,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="runtime.linux-arm64.Microsoft.DotNet.ILCompiler" Version="9.0.0" />
-    <PackageReference Include="runtime.linux-musl-arm64.Microsoft.DotNet.ILCompiler" Version="9.0.0" />
-    <PackageReference Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="9.0.0" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
-    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+    <PackageReference Include="MailKit" Version="4.10.0" />
+    <PackageReference Include="runtime.linux-arm64.Microsoft.DotNet.ILCompiler" Version="9.0.2" />
+    <PackageReference Include="runtime.linux-musl-arm64.Microsoft.DotNet.ILCompiler" Version="9.0.2" />
+    <PackageReference Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="9.0.2" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.2" />
+    <PackageReference Include="System.Text.Json" Version="9.0.2" />
     <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.2" />
   </ItemGroup>
 

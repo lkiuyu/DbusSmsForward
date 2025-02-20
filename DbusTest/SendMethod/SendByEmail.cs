@@ -1,9 +1,9 @@
-﻿using System.Net.Mail;
-using System.Net;
-using DbusSmsForward.SMSModel;
+﻿using DbusSmsForward.SMSModel;
 using DbusSmsForward.ProcessSmsContent;
 using DbusSmsForward.Helper;
 using DbusSmsForward.SettingModel;
+using MimeKit;
+using MailKit.Net.Smtp;
 
 namespace DbusSmsForward.SendMethod
 {
@@ -27,7 +27,20 @@ namespace DbusSmsForward.SendMethod
                 Console.WriteLine("请输入smtp端口：");
                 smtpPort = Console.ReadLine().Trim();
                 result.appSettings.EmailConfig.smtpPort = smtpPort;
-
+                string sslEnableInput = string.Empty;
+                do
+                {
+                    Console.WriteLine("是否需要启用ssl(1.启用 2.不启用)");
+                    sslEnableInput = Console.ReadLine().Trim();
+                } while (!(sslEnableInput == "1" || sslEnableInput == "2"));
+                if (sslEnableInput == "1")
+                {
+                    result.appSettings.EmailConfig.enableSSL = "true";
+                }
+                else
+                {
+                    result.appSettings.EmailConfig.enableSSL = "false";
+                }
                 Console.WriteLine("请输入邮箱密钥：");
                 emailKey = Console.ReadLine().Trim();
                 result.appSettings.EmailConfig.emailKey = emailKey;
@@ -43,43 +56,34 @@ namespace DbusSmsForward.SendMethod
                 ConfigHelper.UpdateSettings(ref result);
             }
             result = null;
-
         }
-
 
         public static void SendSms(SmsContentModel smsmodel, string body)
         {
-
             appsettingsModel result = new appsettingsModel();
             ConfigHelper.GetSettings(ref result);
             string smtpHost = result.appSettings.EmailConfig.smtpHost;
             string smtpPort = result.appSettings.EmailConfig.smtpPort;
+            bool enableSSL = Convert.ToBoolean(result.appSettings.EmailConfig.enableSSL);
             string emailKey = result.appSettings.EmailConfig.emailKey;
             string sendEmial = result.appSettings.EmailConfig.sendEmial;
             string reciveEmial = result.appSettings.EmailConfig.reciveEmial;
             result = null;
-            MailAddress to = new MailAddress(reciveEmial);
-            MailAddress from = new MailAddress(sendEmial, "SMSForwad");
-            MailMessage mm = new MailMessage(from, to);
-            SmtpClient sc = new SmtpClient(smtpHost);
-            try
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("SMSForwad", sendEmial));
+            message.To.Add(new MailboxAddress("", reciveEmial));
+            string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+            message.Subject = (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + " ") + "短信转发" + smsmodel.TelNumber;
+            message.Body = new TextPart("plain")
             {
-                string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
-                mm.Subject = (string.IsNullOrEmpty(SmsCodeStr)?"": SmsCodeStr + " ") + "短信转发" + smsmodel.TelNumber;
-                mm.Body = body;
-                sc.DeliveryMethod = SmtpDeliveryMethod.Network;
-                sc.Credentials = new NetworkCredential(sendEmial, emailKey);
-                sc.Send(mm);
-                Console.WriteLine("邮箱转发成功");
-                mm.Dispose();
-                sc.Dispose();
-            }
-            catch (SmtpException ex)
+                Text = body
+            };
+            using (var client = new SmtpClient())
             {
-                mm.Dispose();
-                sc.Dispose();
-                Console.WriteLine(ex);
-                Console.WriteLine("出错了，尝试确认下配置文件中的邮箱信息是否正确，配置文件为DbusSmsForward.dll.config");
+                client.Connect(smtpHost, Convert.ToInt32(smtpPort), enableSSL);
+                client.Authenticate(sendEmial, emailKey);
+                client.Send(message);
+                client.Disconnect(true);
             }
         }
     }
