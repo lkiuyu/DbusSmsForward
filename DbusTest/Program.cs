@@ -3,8 +3,7 @@ using DbusSmsForward.SMSModel;
 using DbusSmsForward.ModemHelper;
 
 
-ModemManagerHelper.SetModemObjectPathList();
-ModemManagerHelper.WatchModems();
+ModemManagerHelper mmhelper=new ModemManagerHelper();
 string startGuideChoiseNum = "";
 List<string> sendMethodGuideChoiseNumArray= new List<string>();
 foreach (var s1 in args)
@@ -48,7 +47,7 @@ string StartGuideResult = ProcessChoise.onStartGuide(startGuideChoiseNum);
 if (StartGuideResult == "1")
 {
     List<Action<SmsContentModel, string>> actionList=  ProcessChoise.sendMethodGuide(sendMethodGuideChoiseNumArray);
-    ModemManagerHelper.SetSendMethodList(actionList);
+    mmhelper.SetSendMethodList(actionList);
     Console.WriteLine("正在运行. 按下 Ctrl-C 停止.");
     var tcs = new TaskCompletionSource<bool>();
     var task = tcs.Task;
@@ -63,7 +62,7 @@ else if(StartGuideResult == "2")
     string sendChoise = Console.ReadLine();
     if (sendChoise == "1")
     {
-        if (ModemManagerHelper.SendSms(telNumber, smsText).Result)
+        if (mmhelper.SendSms(telNumber, smsText).Result)
         {
             Console.WriteLine("短信已发送");
         }

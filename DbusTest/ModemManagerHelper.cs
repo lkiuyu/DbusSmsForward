@@ -8,103 +8,93 @@ using Tmds.DBus.Protocol;
 
 namespace DbusSmsForward.ModemHelper
 {
-    public static class ModemManagerHelper
+    public class ModemManagerHelper
     {
-        public static Dictionary<ObjectPath, Dictionary<string, Dictionary<string, VariantValue>>> _modemObjectPathList = new Dictionary<ObjectPath, Dictionary<string, Dictionary<string, VariantValue>>>();
-        public static string _modemObjectPathNowUse = "";
-        public static string qmiPathNowUse = "";
-        public static string _modemManagerObjectPath = "/org/freedesktop/ModemManager1";
-        public static string? systemBusAddress = Address.System;
-        public static string baseService = "org.freedesktop.ModemManager1";
-        public static bool isSetModemObjectPathListDone = false;
-        public static List<Action<SmsContentModel, string>> smsSendMethodList = new List<Action<SmsContentModel, string>>();
+        private readonly Lock _modemObjectPathListLockObject = new();
+        public Dictionary<ObjectPath, Dictionary<string, Dictionary<string, VariantValue>>> _modemObjectPathList = new Dictionary<ObjectPath, Dictionary<string, Dictionary<string, VariantValue>>>();
+        public string _modemObjectPathNowUse = "";
+        public string qmiPathNowUse = "";
+        public string _modemManagerObjectPath = "/org/freedesktop/ModemManager1";
+        public string? systemBusAddress = Address.System;
+        public string baseService = "org.freedesktop.ModemManager1";
+        public List<Action<SmsContentModel, string>> smsSendMethodList = new List<Action<SmsContentModel, string>>();
+        public string deviceUidNowUse = "";
+        private readonly Lock _subscribeSmsPathListLockObject = new();
+        public Dictionary<string,bool> SubscribeSmsPathList=new Dictionary<string, bool>();
 
-        public static async void SetModemObjectPathList()
+        public ModemManagerHelper()
         {
-            if (!isSetModemObjectPathListDone)
+            if (!string.IsNullOrEmpty(systemBusAddress))
             {
-                _modemObjectPathList = await GetModemsPathList();
-                isSetModemObjectPathListDone = true;
-                if (_modemObjectPathList.Count == 1)
-                {
-                    SetNowUsedModemPath(_modemObjectPathList.First().Key);
-                }
-                foreach (var item in _modemObjectPathList)
-                {
-                    SubscribeSms(item.Key);
-                }
+                InitLoadModemObjectPathList();
+                WatchModems();
             }
         }
 
-        public static void SetNowUsedModemPath(string modemObjectPathNowUse)
+        public void InitLoadModemObjectPathList()
+        {
+            lock (_modemObjectPathListLockObject)
+            {
+                _modemObjectPathList = GetModemsPathList().Result;
+            }
+            if (_modemObjectPathList.Count == 1)
+            {
+                SetNowUsedModemPath(_modemObjectPathList.First().Key);
+            }
+            if (_modemObjectPathList.Count == 0)
+            {
+                SetNowUsedModemPath(null);
+            }
+            foreach (var item in _modemObjectPathList)
+            {
+                SubscribeSms(item.Key);
+            }
+        }
+
+        public void SetSendMethodList(List<Action<SmsContentModel, string>> SendMethodList)
+        {
+            smsSendMethodList = SendMethodList;
+        }
+
+        public void SetNowUsedModemPath(string modemObjectPathNowUse)
         {
             _modemObjectPathNowUse = modemObjectPathNowUse;
             if (string.IsNullOrEmpty(_modemObjectPathNowUse))
             {
                 qmiPathNowUse = "";
+                deviceUidNowUse = "";
             }
             else
             {
                 qmiPathNowUse = GetQMIDevice().Result;
+                deviceUidNowUse = GetDevice().Result;
             }
-        }
-        public static void SetSendMethodList(List<Action<SmsContentModel, string>> SendMethodList)
-        {
-            smsSendMethodList = SendMethodList;
+
         }
 
-
-        public static bool JudgeNowModemIsAvaliable(ref int statusCode, ref string errorMsg)
+        public void WatchModems()
         {
-            if (!string.IsNullOrEmpty(_modemObjectPathNowUse) && _modemObjectPathList.Count == 1)
-            {
-                return true;
-            }
-            else if (!string.IsNullOrEmpty(_modemObjectPathNowUse) && _modemObjectPathList.Count > 1)
-            {
-                statusCode = 1;
-                return true;
-            }
-            else if (_modemObjectPathList.Count > 1)
-            {
-                statusCode = 2;
-                errorMsg = "搜索到有多个可用modem，请选择一个默认使用";
-                return false;
-            }
-            else
-            {
-                statusCode = 3;
-                errorMsg = "未找到可用的modem";
-                return false;
-            }
-        }
 
-        public static void WatchModems()
-        {
-            try
+            Task.Run(async () =>
             {
-                Task.Run(async () =>
+                try
                 {
                     using (var connection = new Connection(systemBusAddress))
                     {
                         await connection.ConnectAsync();
                         var service = new ModemManager1Service(connection, baseService);
                         var objectManager = service.CreateObjectManager(_modemManagerObjectPath);
-                        //Console.WriteLine($"Subscribing for modem RemovedChanges");
+                        Console.WriteLine($"Subscribing for modem RemovedChanges");
                         await objectManager.WatchInterfacesRemovedAsync(
                         async (Exception? ex, (ObjectPath ObjectPath, string[] Interfaces) change) =>
                         {
                             if (ex is null)
                             {
-                                if (change.ObjectPath == _modemObjectPathNowUse)
+                                Console.WriteLine("modem has been removed,modem path:" + change.ObjectPath.ToString());
+                                InitLoadModemObjectPathList();
+                                if (!string.IsNullOrEmpty(_modemObjectPathNowUse))
                                 {
-                                    Console.WriteLine("The modem currently in use has been removed,you may need select new modem,removed modem path:" + change.ObjectPath.ToString());
-                                    _modemObjectPathList.Remove(change.ObjectPath);
-                                    SetNowUsedModemPath(string.Empty);
-                                }
-                                else
-                                {
-                                    Console.WriteLine("modem has been removed,modem path:" + change.ObjectPath.ToString());
+                                    DisableAndEnableModem().Wait();
                                 }
                             }
                         });
@@ -112,29 +102,32 @@ namespace DbusSmsForward.ModemHelper
                         var task = tcs.Task;
                         await task;
                     }
-                });
-                Task.Run(async () =>
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+            });
+            Task.Run(async () =>
+            {
+                try
                 {
                     using (var connection = new Connection(systemBusAddress))
                     {
                         await connection.ConnectAsync();
                         var service = new ModemManager1Service(connection, baseService);
                         var objectManager = service.CreateObjectManager(_modemManagerObjectPath);
-                        //Console.WriteLine($"Subscribing for modem AddedChanges");
+                        Console.WriteLine($"Subscribing for modem AddedChanges");
                         await objectManager.WatchInterfacesAddedAsync(
                         async (Exception? ex, (ObjectPath ObjectPath, Dictionary<string, Dictionary<string, VariantValue>> InterfacesAndProperties) change) =>
                         {
                             if (ex is null)
                             {
-                                if (!_modemObjectPathList.ContainsKey(change.ObjectPath))
+                                Console.WriteLine("new modem added,modem path:" + change.ObjectPath.ToString());
+                                InitLoadModemObjectPathList();
+                                if (!string.IsNullOrEmpty(_modemObjectPathNowUse))
                                 {
-                                    _modemObjectPathList.Add(change.ObjectPath, change.InterfacesAndProperties);
-                                    Console.WriteLine("new modem added,modem path:" + change.ObjectPath.ToString());
-                                    if (string.IsNullOrEmpty(_modemObjectPathNowUse) && _modemObjectPathList.Count == 1)
-                                    {
-                                        SetNowUsedModemPath(change.ObjectPath);
-                                    }
-                                    SubscribeSms(change.ObjectPath);
+                                    DisableAndEnableModem().Wait();
                                 }
                             }
                         });
@@ -142,91 +135,144 @@ namespace DbusSmsForward.ModemHelper
                         var task = tcs.Task;
                         await task;
                     }
-                });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+            });
 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
         }
 
-        public static void SubscribeSms(string path)
+        public void SubscribeSms(string path)
         {
-            try
+            Task.Run(async () =>
             {
-                Task.Run(async () =>
+                try
                 {
-                    using (var connection = new Connection(systemBusAddress))
+                    if ((!SubscribeSmsPathList.ContainsKey(path) || (SubscribeSmsPathList.ContainsKey(path) && !SubscribeSmsPathList[path]))&& _modemObjectPathList.ContainsKey(path))
                     {
-                        await connection.ConnectAsync();
-                        var service = new ModemManager1Service(connection, baseService);
-                        var messaging = service.CreateMessaging(path);
-                        //Console.WriteLine($"add subscribe sms for modem path:" + path);
-                        await messaging.WatchAddedAsync(
-                        async (Exception? ex, (ObjectPath Path, bool Received) change) =>
+                        if (SubscribeSmsPathList.ContainsKey(path))
                         {
-                            if (ex is null)
+                            lock (_subscribeSmsPathListLockObject)
                             {
-                                if (change.Received)
+                                SubscribeSmsPathList[path] = true;
+                            }
+                        }
+                        else
+                        {
+                            lock (_subscribeSmsPathListLockObject)
+                            {
+                                SubscribeSmsPathList.Add(path, true);
+                            }
+                        }
+                        //SetMsgDefaultStorageToME(path);
+                        using (var connection = new Connection(systemBusAddress))
+                        {
+                            await connection.ConnectAsync();
+                            var service = new ModemManager1Service(connection, baseService);
+                            var messaging = service.CreateMessaging(path);
+                            Console.WriteLine($"add subscribe sms for modem path:" + path);
+                            await messaging.WatchAddedAsync(
+                            async (Exception? ex, (ObjectPath Path, bool Received) change) =>
+                            {
+                                if (ex is null)
                                 {
-                                    var smsPath = change.Path;
-                                    var service = new ModemManager1Service(connection, baseService);
-                                    var sms = service.CreateSms(smsPath);
-                                    var smsState = await sms.GetStateAsync();
-                                    if (smsState == 2 || smsState == 3)
+                                    if (change.Received)
                                     {
-                                        uint Storage = await sms.GetStorageAsync();
-                                        if (!ConfigHelper.JudgeIsForwardIgnore(Storage))
+                                        try
                                         {
-                                            string telNum = await sms.GetNumberAsync();
-                                            string smsDate = (await sms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
-                                            do
+                                            var smsPath = change.Path;
+                                            var service = new ModemManager1Service(connection, baseService);
+                                            var sms = service.CreateSms(smsPath);
+                                            var smsState = await sms.GetStateAsync();
+                                            if (smsState == 2 || smsState == 3)
                                             {
-                                                smsState = await sms.GetStateAsync();
-                                                Thread.Sleep(100);
-                                            } while (smsState == 2);
-                                            string smsContent = await sms.GetTextAsync();
-                                            SmsContentModel smsmodel = new SmsContentModel();
-                                            smsmodel.TelNumber = telNum;
-                                            smsmodel.SmsDate = smsDate;
-                                            smsmodel.SmsContent = smsContent;
-                                            string body = "发信电话:" + telNum + "\n" + "时间:" + smsDate + "\n" + "短信内容:" + smsContent;
-                                            if (smsSendMethodList.Count() > 0)
-                                            {
-                                                foreach (var action in smsSendMethodList)
+                                                uint Storage = await sms.GetStorageAsync();
+                                                if (!ConfigHelper.JudgeIsForwardIgnore(Storage))
                                                 {
-                                                    action.Invoke(smsmodel, body);
+                                                    string telNum = await sms.GetNumberAsync();
+                                                    string smsDate = (await sms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
+                                                    do
+                                                    {
+                                                        smsState = await sms.GetStateAsync();
+                                                        Thread.Sleep(100);
+                                                    } while (smsState == 2);
+                                                    string smsContent = await sms.GetTextAsync();
+                                                    SmsContentModel smsmodel = new SmsContentModel();
+                                                    smsmodel.TelNumber = telNum;
+                                                    smsmodel.SmsDate = smsDate;
+                                                    smsmodel.SmsContent = smsContent;
+                                                    string body = "发信电话:" + telNum + "\n" + "时间:" + smsDate + "\n" + "短信内容:" + smsContent;
+                                                    Console.WriteLine("smspath " + smsPath);
+                                                    if (smsSendMethodList.Count() > 0)
+                                                    {
+                                                        Console.WriteLine("转发方法数量"+smsSendMethodList.Count());
+                                                        foreach (var action in smsSendMethodList)
+                                                        {
+                                                            action.Invoke(smsmodel, body);
+                                                        }
+                                                    }
                                                 }
+
                                             }
                                         }
+                                        catch (Exception ex2)
+                                        {
+                                            Console.WriteLine("GetSmsError" + ex2.Message);
+                                        }
+
                                     }
                                 }
-                            }
-                            else
+                                else
+                                {
+                                    Console.WriteLine(ex);
+                                }
+                            });
+                            Task task = Task.Run(() =>
                             {
-                                Console.WriteLine(ex);
-                            }
-                        });
-                        Task task = Task.Run(() =>
-                        {
-                            do
-                            {
-                                Thread.Sleep(100);
-                            } while (_modemObjectPathList.ContainsKey(path));
-                        });
-                        await task;
-                        Console.WriteLine($"remove subscribe sms for modem path:" + path);
+                                var modem = service.CreateModem(path);
+                                
+                                do
+                                {
+                                    try
+                                    {
+                                        var Manufacturer = modem.GetManufacturerAsync().Result;
+                                        Manufacturer = null;
+                                        Thread.Sleep(1000);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        break;
+                                    }
+                                    
+                                } while (SubscribeSmsPathList.ContainsKey(path) && SubscribeSmsPathList[path] && _modemObjectPathList.ContainsKey(path));
+                                if (SubscribeSmsPathList.ContainsKey(path))
+                                {
+                                    lock (_subscribeSmsPathListLockObject)
+                                    {
+                                        SubscribeSmsPathList[path] = false;
+                                    }
+                                }
+                            });
+                            await task;
+                            Console.WriteLine($"remove subscribe sms for modem path:" + path);
+                        }
                     }
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
+                    
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                    Console.WriteLine($"remove subscribe sms for modem path:" + path);
+                }
+
+
+            });
+
         }
 
-        public static async Task<bool> SendSms(string telNum, string smsContent)
+        public async Task<bool> SendSms(string telNum, string smsContent)
         {
             try
             {
@@ -248,7 +294,7 @@ namespace DbusSmsForward.ModemHelper
             }
         }
 
-        public static async Task<Dictionary<ObjectPath, Dictionary<string, Dictionary<string, VariantValue>>>> GetModemsPathList()
+        public async Task<Dictionary<ObjectPath, Dictionary<string, Dictionary<string, VariantValue>>>> GetModemsPathList()
         {
             try
             {
@@ -268,7 +314,7 @@ namespace DbusSmsForward.ModemHelper
             return new Dictionary<ObjectPath, Dictionary<string, Dictionary<string, VariantValue>>>();
         }
 
-        public static async Task ScanDevices()
+        public async Task ScanDevices()
         {
             try
             {
@@ -284,11 +330,14 @@ namespace DbusSmsForward.ModemHelper
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                if (!(ex.Message.IndexOf("unsupported") >-1))
+                {
+                    Console.WriteLine("ScanDevices失败" + ex.Message);
+                }
             }
         }
 
-        public static async Task<string> GetManufacturer(string? path = null)
+        public async Task<string> GetManufacturer(string? path = null)
         {
             try
             {
@@ -311,7 +360,86 @@ namespace DbusSmsForward.ModemHelper
             }
         }
 
-        public static async Task DisableModem(string? path = null)
+        public async Task<bool> JudgeCanGetStatus(string? path = null)
+        {
+            try
+            {
+                string actUsePath = path == null ? _modemObjectPathNowUse : path;
+                using (var connection = new Connection(systemBusAddress))
+                {
+                    await connection.ConnectAsync();
+                    var service = new ModemManager1Service(connection, baseService);
+                    var modem = service.CreateSimple(actUsePath);
+                    var status = await modem.GetStatusAsync();
+                    modem = null;
+                    service = null;
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                //Console.WriteLine(ex);
+                return false;
+            }
+        }
+
+        public async Task DisableAndEnableModem(string? path = null)
+        {
+            try
+            {
+                string actUsePath = path == null ? _modemObjectPathNowUse : path;
+                if (!string.IsNullOrEmpty(actUsePath))
+                {
+                    using (var connection = new Connection(systemBusAddress))
+                    {
+                        await connection.ConnectAsync();
+                        var service = new ModemManager1Service(connection, baseService);
+                        var modem = service.CreateModem(actUsePath);
+                        try
+                        {
+                            await modem.EnableAsync(false);
+                            Thread.Sleep(200);
+                            await modem.EnableAsync(true);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e);
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("DisableAndEnableModem:actUsePath为空");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+        public async Task InhibitModemDevice(string uid, bool inhibit)
+        {
+            try
+            {
+                Console.WriteLine("device:" + uid);
+                using (var connection = new Connection(systemBusAddress))
+                {
+                    await connection.ConnectAsync();
+                    var service = new ModemManager1Service(connection, baseService);
+                    var modemManager = service.CreateModemManager1(_modemManagerObjectPath);
+                    await modemManager.InhibitDeviceAsync(uid, inhibit);
+                    modemManager = null;
+                    service = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("InhibitModemDevice失败" + ex);
+            }
+        }
+
+        public async Task<string> GetDevice(string? path = null)
         {
             try
             {
@@ -321,24 +449,20 @@ namespace DbusSmsForward.ModemHelper
                     await connection.ConnectAsync();
                     var service = new ModemManager1Service(connection, baseService);
                     var modem = service.CreateModem(actUsePath);
-                    await modem.EnableAsync(false);
-                    try
-                    {
-                        await modem.EnableAsync(true);
-                    }
-                    catch
-                    {
-
-                    }
+                    var device = await modem.GetDeviceAsync();
+                    modem = null;
+                    service = null;
+                    return device;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+                return string.Empty;
             }
         }
 
-        public static async Task<string> GetQMIDevice(string? path = null)
+        public async Task<string> GetQMIDevice(string? path = null)
         {
             try
             {
@@ -366,7 +490,8 @@ namespace DbusSmsForward.ModemHelper
             }
         }
 
-        public static async Task<string> GetModel(string? path = null)
+
+        public async Task<string> GetModel(string? path = null)
         {
             try
             {
@@ -388,8 +513,7 @@ namespace DbusSmsForward.ModemHelper
                 return string.Empty;
             }
         }
-
-        public static async Task<string> GetRevision(string? path = null)
+        public async Task<string> GetRevision(string? path = null)
         {
             try
             {
@@ -411,8 +535,7 @@ namespace DbusSmsForward.ModemHelper
                 return string.Empty;
             }
         }
-
-        public static async Task<string> GetSignalQuality(string? path = null)
+        public async Task<string> GetSignalQuality(string? path = null)
         {
             try
             {
@@ -434,8 +557,7 @@ namespace DbusSmsForward.ModemHelper
                 return string.Empty;
             }
         }
-
-        public static async Task<string[]> GetOwnNumbers(string? path = null)
+        public async Task<string[]> GetOwnNumbers(string? path = null)
         {
             try
             {
@@ -458,7 +580,7 @@ namespace DbusSmsForward.ModemHelper
             }
         }
 
-        public static async Task<uint?> GetPrimarySimSlot(string? path = null)
+        public async Task<uint?> GetPrimarySimSlot(string? path = null)
         {
             try
             {
@@ -479,7 +601,7 @@ namespace DbusSmsForward.ModemHelper
             }
         }
 
-        public static async Task<string> GetICCID(string? path = null)
+        public async Task<string> GetICCID(string? path = null)
         {
             try
             {
@@ -504,7 +626,7 @@ namespace DbusSmsForward.ModemHelper
             }
         }
 
-        public static async Task<string> GetImei(string? path = null)
+        public async Task<string> GetImei(string? path = null)
         {
             try
             {
@@ -526,8 +648,7 @@ namespace DbusSmsForward.ModemHelper
                 return string.Empty;
             }
         }
-
-        public static async Task<string> GetOperatorCode(string? path = null)
+        public async Task<string> GetOperatorCode(string? path = null)
         {
             try
             {
@@ -549,8 +670,7 @@ namespace DbusSmsForward.ModemHelper
                 return string.Empty;
             }
         }
-
-        public static async Task<string> GetOperatorName(string? path = null)
+        public async Task<string> GetOperatorName(string? path = null)
         {
             try
             {
@@ -573,10 +693,28 @@ namespace DbusSmsForward.ModemHelper
             }
         }
 
-        public static bool RestartModem()
+        public async Task SetMsgDefaultStorageToME(string path)
+        {
+            try
+            {
+                using (var connection = new Connection(systemBusAddress))
+                {
+                    await connection.ConnectAsync();
+                    var service = new ModemManager1Service(connection, baseService);
+                    var messaging = service.CreateMessaging(path);
+                    await messaging.SetDefaultStorageAsync(2);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+        public bool RestartModem()
         {
             string qmiPath = GetQMIDevice().Result;
             uint? simslot = GetPrimarySimSlot().Result;
+            string usedDevice = deviceUidNowUse;
             if (simslot.HasValue)
             {
                 if (simslot.Value == 0)
@@ -637,7 +775,18 @@ namespace DbusSmsForward.ModemHelper
                         return false;
                     }
                 }
-                DisableModem().Wait();
+                if (JudgeCanGetStatus().Result)
+                {
+                    DisableAndEnableModem().Wait();
+                }
+                Thread.Sleep(200);
+                if (JudgeCanGetStatus().Result)
+                {
+                    InhibitModemDevice(usedDevice, true).Wait();
+                    Thread.Sleep(200);
+                    InhibitModemDevice(usedDevice, false).Wait();
+                }
+
                 return true;
 
             }
