@@ -223,7 +223,7 @@ namespace DbusSmsForward.ModemHelper
                                                         smsmodel.TelNumber = telNum;
                                                         smsmodel.SmsDate = smsDate;
                                                         smsmodel.SmsContent = smsContent;
-                                                        string body = "发信电话:" + telNum + "\n" + "时间:" + smsDate + "\n" + "转发设备:" + DeviceName + "短信内容:" + smsContent;
+                                                        string body = "发信电话:" + telNum + "\n" + "时间:" + smsDate + "\n" + "转发设备:" + DeviceName + "\n" + "短信内容:" + smsContent;
                                                         Console.WriteLine("smspath " + smsPath);
                                                         if (smsSendMethodList.Count() > 0)
                                                         {
