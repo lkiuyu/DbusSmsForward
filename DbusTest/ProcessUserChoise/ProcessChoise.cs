@@ -25,11 +25,11 @@ namespace DbusSmsForward.ProcessUserChoise
 
         }
 
-        public static List<Action<SmsContentModel, string>> sendMethodGuide(List<string> chooseOptions)
+        public static List<Action<SmsContentModel, string, string>> sendMethodGuide(List<string> chooseOptions)
         {
             if(chooseOptions.Count() == 0)
             {
-                Console.WriteLine("请选择转发渠道：1.邮箱转发，2.pushplus转发，3.企业微信转发，4.TG机器人转发，5.钉钉转发，6.Bark转发，同时转发多渠道请以空格分割编号（举例：1 2 3 5）");
+                Console.WriteLine("请选择转发渠道：1.邮箱转发，2.pushplus转发，3.企业微信转发，4.TG机器人转发，5.钉钉转发，6.Bark转发，7.自定义shell转发，同时转发多渠道请以空格分割编号（举例：1 2 3 5）");
                 chooseOptions.Add(Console.ReadLine());
                 return sendMethodGuide(chooseOptions);
             }
@@ -46,7 +46,7 @@ namespace DbusSmsForward.ProcessUserChoise
                 {
                     if (JudgeChooseIsValid(chooseOptions,true))
                     {
-                        List<Action<SmsContentModel, string>> actions = new List<Action<SmsContentModel, string>>();
+                        List<Action<SmsContentModel, string, string>> actions = new List<Action<SmsContentModel, string, string>>();
                         foreach (var chooseOption in chooseOptions)
                         {
                             if (chooseOption == "1")
@@ -79,27 +79,32 @@ namespace DbusSmsForward.ProcessUserChoise
                                 SendByBark.SetupBarkInfo();
                                 actions.Add(SendByBark.SendSms);
                             }
+                            if (chooseOption == "7")
+                            {
+                                SendByShell.SetupCustomShellInfo();
+                                actions.Add(SendByShell.SendSms);
+                            }
                         }
                         return actions;
                     }
                     else
                     {
-                        Console.WriteLine("请输入1或2或3或4或5或6");
+                        Console.WriteLine("请输入1或2或3或4或5或6或7");
                         return sendMethodGuide(new List<string>());
                     }
                 }
             }
-            return new List<Action<SmsContentModel, string>>();
+            return new List<Action<SmsContentModel, string, string>>();
         }
         public static bool JudgeChooseIsValid(List<string> chooseOptions,bool isCheckAll=false)
         {
             if (isCheckAll)
             {
-                return chooseOptions.Where(a => a == "1" || a == "2" || a == "3" || a == "4" || a == "5" || a == "6").Count() == chooseOptions.Count();
+                return chooseOptions.Where(a => a == "1" || a == "2" || a == "3" || a == "4" || a == "5" || a == "6" || a == "7").Count() == chooseOptions.Count();
             }
             else
             {
-                return chooseOptions.Where(a => a == "1" || a == "2" || a == "3" || a == "4" || a == "5" || a == "6").Count() > 0;
+                return chooseOptions.Where(a => a == "1" || a == "2" || a == "3" || a == "4" || a == "5" || a == "6" || a == "7").Count() > 0;
             }
         }
 

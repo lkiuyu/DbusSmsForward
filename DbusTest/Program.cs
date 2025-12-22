@@ -1,6 +1,8 @@
-﻿using DbusSmsForward.ProcessUserChoise;
-using DbusSmsForward.SMSModel;
+﻿using DbusSmsForward.Helper;
 using DbusSmsForward.ModemHelper;
+using DbusSmsForward.ProcessUserChoise;
+using DbusSmsForward.SettingModel;
+using DbusSmsForward.SMSModel;
 
 
 ModemManagerHelper mmhelper=new ModemManagerHelper();
@@ -38,6 +40,11 @@ foreach (var s1 in args)
         startGuideChoiseNum = "1";
         sendMethodGuideChoiseNumArray.Add("6");
     }
+    else if (s1 == "-fS")
+    {
+        startGuideChoiseNum = "1";
+        sendMethodGuideChoiseNumArray.Add("7");
+    }
     else if (s1 == "-sS")
     {
         startGuideChoiseNum = "2";
@@ -46,7 +53,27 @@ foreach (var s1 in args)
 string StartGuideResult = ProcessChoise.onStartGuide(startGuideChoiseNum);
 if (StartGuideResult == "1")
 {
-    List<Action<SmsContentModel, string>> actionList=  ProcessChoise.sendMethodGuide(sendMethodGuideChoiseNumArray);
+    appsettingsModel result = new appsettingsModel();
+    ConfigHelper.GetSettings(ref result);
+    string DeviceName = result.appSettings.DeviceName;
+    
+    if (string.IsNullOrEmpty(DeviceName))
+    {
+        Console.WriteLine("初次运行是否需要设置转发设备名称?(留空回车则默认动态读取设备主机名)：");
+        DeviceName = Console.ReadLine().Trim();
+        if (string.IsNullOrEmpty(DeviceName))
+        {
+            result.appSettings.DeviceName = "*Host*Name*";
+        }
+        else
+        {
+            result.appSettings.DeviceName = DeviceName;
+        }
+    }
+    ConfigHelper.UpdateSettings(ref result);
+    result = null;
+
+    List<Action<SmsContentModel, string, string>> actionList=  ProcessChoise.sendMethodGuide(sendMethodGuideChoiseNumArray);
     mmhelper.SetSendMethodList(actionList);
     Console.WriteLine("正在运行. 按下 Ctrl-C 停止.");
     var tcs = new TaskCompletionSource<bool>();

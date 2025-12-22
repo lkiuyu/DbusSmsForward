@@ -1,5 +1,5 @@
 FROM mcr.microsoft.com/dotnet-buildtools/prereqs:cbl-mariner-2.0-cross-arm64
-COPY --from=mcr.microsoft.com/dotnet/sdk:9.0.304-bookworm-slim-amd64 /usr/share/dotnet /usr/share/dotnet
+COPY --from=mcr.microsoft.com/dotnet/sdk:10.0.101-azurelinux3.0-amd64 /usr/share/dotnet /usr/share/dotnet
 RUN if [ -e /usr/bin/dotnet ]; then rm /usr/bin/dotnet; fi
 RUN ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
 ENV DOTNET_NOLOGO=true

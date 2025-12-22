@@ -1,5 +1,6 @@
 ﻿using DbusSmsForward.SettingModel;
 using System;
+using System.Net;
 using System.Text.Json;
 
 namespace DbusSmsForward.Helper
@@ -60,6 +61,25 @@ namespace DbusSmsForward.Helper
                 storageTypeNum = 6;
             }
             return false;
+        }
+
+        public static string GetDeviceHostName()
+        {
+            try
+            {
+                return Dns.GetHostName();
+            }
+            catch
+            {
+                try
+                {
+                    return Environment.MachineName;
+                }
+                catch
+                {
+                    return string.Empty;
+                }
+            }
         }
     }
 

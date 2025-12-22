@@ -1,8 +1,10 @@
 ﻿using DbusSmsForward.Helper;
+using DbusSmsForward.SettingModel;
 using DbusSmsForward.SMSModel;
 using ModemManager1.DBus;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 using Tmds.DBus.Protocol;
 
@@ -17,7 +19,7 @@ namespace DbusSmsForward.ModemHelper
         public string _modemManagerObjectPath = "/org/freedesktop/ModemManager1";
         public string? systemBusAddress = Address.System;
         public string baseService = "org.freedesktop.ModemManager1";
-        public List<Action<SmsContentModel, string>> smsSendMethodList = new List<Action<SmsContentModel, string>>();
+        public List<Action<SmsContentModel, string, string>> smsSendMethodList = new List<Action<SmsContentModel, string, string>>();
         public string deviceUidNowUse = "";
         private readonly Lock _subscribeSmsPathListLockObject = new();
         public Dictionary<string,bool> SubscribeSmsPathList=new Dictionary<string, bool>();
@@ -51,7 +53,7 @@ namespace DbusSmsForward.ModemHelper
             }
         }
 
-        public void SetSendMethodList(List<Action<SmsContentModel, string>> SendMethodList)
+        public void SetSendMethodList(List<Action<SmsContentModel, string, string>> SendMethodList)
         {
             smsSendMethodList = SendMethodList;
         }
@@ -84,13 +86,13 @@ namespace DbusSmsForward.ModemHelper
                         await connection.ConnectAsync();
                         var service = new ModemManager1Service(connection, baseService);
                         var objectManager = service.CreateObjectManager(_modemManagerObjectPath);
-                        Console.WriteLine($"Subscribing for modem RemovedChanges");
+                        //Console.WriteLine($"Subscribing for modem RemovedChanges");
                         await objectManager.WatchInterfacesRemovedAsync(
                         async (Exception? ex, (ObjectPath ObjectPath, string[] Interfaces) change) =>
                         {
                             if (ex is null)
                             {
-                                Console.WriteLine("modem has been removed,modem path:" + change.ObjectPath.ToString());
+                                //Console.WriteLine("modem has been removed,modem path:" + change.ObjectPath.ToString());
                                 InitLoadModemObjectPathList();
                                 if (!string.IsNullOrEmpty(_modemObjectPathNowUse))
                                 {
@@ -117,13 +119,13 @@ namespace DbusSmsForward.ModemHelper
                         await connection.ConnectAsync();
                         var service = new ModemManager1Service(connection, baseService);
                         var objectManager = service.CreateObjectManager(_modemManagerObjectPath);
-                        Console.WriteLine($"Subscribing for modem AddedChanges");
+                        //Console.WriteLine($"Subscribing for modem AddedChanges");
                         await objectManager.WatchInterfacesAddedAsync(
                         async (Exception? ex, (ObjectPath ObjectPath, Dictionary<string, Dictionary<string, VariantValue>> InterfacesAndProperties) change) =>
                         {
                             if (ex is null)
                             {
-                                Console.WriteLine("new modem added,modem path:" + change.ObjectPath.ToString());
+                                //Console.WriteLine("new modem added,modem path:" + change.ObjectPath.ToString());
                                 InitLoadModemObjectPathList();
                                 if (!string.IsNullOrEmpty(_modemObjectPathNowUse))
                                 {
@@ -172,7 +174,7 @@ namespace DbusSmsForward.ModemHelper
                             await connection.ConnectAsync();
                             var service = new ModemManager1Service(connection, baseService);
                             var messaging = service.CreateMessaging(path);
-                            Console.WriteLine($"add subscribe sms for modem path:" + path);
+                            //Console.WriteLine($"add subscribe sms for modem path:" + path);
                             await messaging.WatchAddedAsync(
                             async (Exception? ex, (ObjectPath Path, bool Received) change) =>
                             {
@@ -192,29 +194,51 @@ namespace DbusSmsForward.ModemHelper
                                                 if (!ConfigHelper.JudgeIsForwardIgnore(Storage))
                                                 {
                                                     string telNum = await sms.GetNumberAsync();
-                                                    string smsDate = (await sms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
+                                                    //string smsDate = (await sms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
+
+                                                    DateTimeOffset dto = DateTimeOffset.Parse(await sms.GetTimestampAsync(), null, DateTimeStyles.RoundtripKind);
+                                                    // 转换为本地时间
+                                                    DateTime localTime = dto.LocalDateTime;
+                                                    string smsDate = localTime.ToString("yyyy-MM-dd HH:mm:ss");
+                                                    int tryCount = 0;
                                                     do
                                                     {
                                                         smsState = await sms.GetStateAsync();
                                                         Thread.Sleep(100);
-                                                    } while (smsState == 2);
-                                                    string smsContent = await sms.GetTextAsync();
-                                                    SmsContentModel smsmodel = new SmsContentModel();
-                                                    smsmodel.TelNumber = telNum;
-                                                    smsmodel.SmsDate = smsDate;
-                                                    smsmodel.SmsContent = smsContent;
-                                                    string body = "发信电话:" + telNum + "\n" + "时间:" + smsDate + "\n" + "短信内容:" + smsContent;
-                                                    Console.WriteLine("smspath " + smsPath);
-                                                    if (smsSendMethodList.Count() > 0)
+                                                    } while (smsState == 2 && tryCount < 300);
+
+                                                    if (smsState == 3)
                                                     {
-                                                        Console.WriteLine("转发方法数量"+smsSendMethodList.Count());
-                                                        foreach (var action in smsSendMethodList)
+                                                        appsettingsModel result = new appsettingsModel();
+                                                        ConfigHelper.GetSettings(ref result);
+                                                        string DeviceName = result.appSettings.DeviceName;
+                                                        result = null;
+                                                        if (string.IsNullOrEmpty(DeviceName) || DeviceName== "*Host*Name*")
                                                         {
-                                                            action.Invoke(smsmodel, body);
+                                                            DeviceName= ConfigHelper.GetDeviceHostName();
+                                                        }
+
+                                                        string smsContent = await sms.GetTextAsync();
+                                                        SmsContentModel smsmodel = new SmsContentModel();
+                                                        smsmodel.TelNumber = telNum;
+                                                        smsmodel.SmsDate = smsDate;
+                                                        smsmodel.SmsContent = smsContent;
+                                                        string body = "发信电话:" + telNum + "\n" + "时间:" + smsDate + "\n" + "转发设备:" + DeviceName + "短信内容:" + smsContent;
+                                                        Console.WriteLine("smspath " + smsPath);
+                                                        if (smsSendMethodList.Count() > 0)
+                                                        {
+                                                            //Console.WriteLine("转发方法数量"+smsSendMethodList.Count());
+                                                            foreach (var action in smsSendMethodList)
+                                                            {
+                                                                action.Invoke(smsmodel, body, DeviceName);
+                                                            }
                                                         }
                                                     }
+                                                    else
+                                                    {
+                                                        Console.WriteLine("smspath:" + change.Path + " 接收超时，转发取消");
+                                                    }
                                                 }
-
                                             }
                                         }
                                         catch (Exception ex2)
@@ -256,7 +280,7 @@ namespace DbusSmsForward.ModemHelper
                                 }
                             });
                             await task;
-                            Console.WriteLine($"remove subscribe sms for modem path:" + path);
+                            //Console.WriteLine($"remove subscribe sms for modem path:" + path);
                         }
                     }
                     
@@ -281,7 +305,7 @@ namespace DbusSmsForward.ModemHelper
                     await connection.ConnectAsync();
                     var service = new ModemManager1Service(connection, baseService);
                     var messaging = service.CreateMessaging(_modemObjectPathNowUse);
-                    var sendsmsPath = await messaging.CreateAsync(new Dictionary<string, Variant> { { "text", smsContent }, { "number", telNum } });
+                    var sendsmsPath = await messaging.CreateAsync(new Dictionary<string, VariantValue> { { "text", smsContent }, { "number", telNum } });
                     var sms = service.CreateSms(sendsmsPath);
                     await sms.SendAsync();
                     return true;

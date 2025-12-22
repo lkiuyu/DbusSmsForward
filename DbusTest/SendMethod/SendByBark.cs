@@ -13,7 +13,7 @@ namespace DbusSmsForward.SendMethod
             appsettingsModel result = new appsettingsModel();
             ConfigHelper.GetSettings(ref result);
             string BarkUrl = result.appSettings.BarkConfig.BarkUrl;
-            string BrakKey = result.appSettings.BarkConfig.BrakKey;
+            string BrakKey = result.appSettings.BarkConfig.BarkKey;
 
             if (string.IsNullOrEmpty(BarkUrl) && string.IsNullOrEmpty(BrakKey))
             {
@@ -22,25 +22,28 @@ namespace DbusSmsForward.SendMethod
                 result.appSettings.BarkConfig.BarkUrl = BarkUrl;
                 Console.WriteLine("首次运行请输入Bark推送key");
                 BrakKey = Console.ReadLine().Trim();
-                result.appSettings.BarkConfig.BrakKey = BrakKey;
+                result.appSettings.BarkConfig.BarkKey = BrakKey;
                 ConfigHelper.UpdateSettings(ref result);
             }
             result = null;
         }
 
-        public static void SendSms(SmsContentModel smsmodel, string body)
+        public static void SendSms(SmsContentModel smsmodel, string body, string devicename)
         {
             try
             {
                 appsettingsModel result = new appsettingsModel();
                 ConfigHelper.GetSettings(ref result);
                 string BarkUrl = result.appSettings.BarkConfig.BarkUrl;
-                string BrakKey = result.appSettings.BarkConfig.BrakKey;
+                string BrakKey = result.appSettings.BarkConfig.BarkKey;
                 result = null;
-                string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+                //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+
+                SmsCodeModel codeResult = GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
+
                 string url = BarkUrl + "/" + BrakKey + "/";
                 url += System.Web.HttpUtility.UrlEncode(body);
-                url += "?group=" + smsmodel.TelNumber + "&title="+ (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + " ") + "短信转发" + smsmodel.TelNumber+(string.IsNullOrEmpty(SmsCodeStr)?"":"&autoCopy=1&copy="+ GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent).CodeValue);
+                url += "?group=" + smsmodel.TelNumber + "&title="+ (string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + " ") + "短信转发" + smsmodel.TelNumber+(string.IsNullOrEmpty(codeResult.CodeValue) ?"":"&autoCopy=1&copy="+ codeResult.CodeValue);
                 string msgresult = HttpHelper.HttpGet(url);
                 //JsonObject jsonObjresult = JObject.Parse(msgresult);
                 var jsonObjresult = JsonSerializer.Deserialize(msgresult, SourceGenerationContext.Default.JsonObject);

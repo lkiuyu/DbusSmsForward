@@ -52,7 +52,7 @@ namespace DbusSmsForward.SendMethod
 
         }
 
-        public static void SendSms(SmsContentModel smsmodel, string body)
+        public static void SendSms(SmsContentModel smsmodel, string body, string devicename)
         {
             appsettingsModel result = new appsettingsModel();
             ConfigHelper.GetSettings(ref result);
@@ -61,8 +61,8 @@ namespace DbusSmsForward.SendMethod
             string IsEnableCustomTGBotApi = result.appSettings.TGBotConfig.IsEnableCustomTGBotApi;
             string CustomTGBotApi = result.appSettings.TGBotConfig.CustomTGBotApi;
             result = null;
-            string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
-
+            //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+            SmsCodeModel codeResult = GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
             string url = "";
             if (IsEnableCustomTGBotApi=="true")
             {
@@ -73,7 +73,7 @@ namespace DbusSmsForward.SendMethod
                 url = "https://api.telegram.org";
             }
             url+= "/bot" + TGBotToken + "/sendMessage?chat_id=" + TGBotChatID + "&text=";
-            url += System.Web.HttpUtility.UrlEncode((string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + "\n") + "短信转发\n" + body);
+            url += System.Web.HttpUtility.UrlEncode((string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + "\n") + "短信转发\n" + body);
             string msgresult = HttpHelper.HttpGet(url);
             JsonObject jsonObjresult = JsonSerializer.Deserialize(msgresult, SourceGenerationContext.Default.JsonObject);
             string status = jsonObjresult["ok"].ToString();

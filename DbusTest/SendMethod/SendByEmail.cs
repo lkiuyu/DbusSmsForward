@@ -16,9 +16,9 @@ namespace DbusSmsForward.SendMethod
             string smtpHost = result.appSettings.EmailConfig.smtpHost;
             string smtpPort = result.appSettings.EmailConfig.smtpPort;
             string emailKey = result.appSettings.EmailConfig.emailKey;
-            string sendEmial = result.appSettings.EmailConfig.sendEmial;
-            string reciveEmial = result.appSettings.EmailConfig.reciveEmial;
-            if (string.IsNullOrEmpty(smtpHost) && string.IsNullOrEmpty(smtpPort) && string.IsNullOrEmpty(emailKey) && string.IsNullOrEmpty(sendEmial) && string.IsNullOrEmpty(reciveEmial))
+            string sendEmail = result.appSettings.EmailConfig.sendEmail;
+            string reciveEmail = result.appSettings.EmailConfig.reciveEmail;
+            if (string.IsNullOrEmpty(smtpHost) && string.IsNullOrEmpty(smtpPort) && string.IsNullOrEmpty(emailKey) && string.IsNullOrEmpty(sendEmail) && string.IsNullOrEmpty(reciveEmail))
             {
                 Console.WriteLine("首次运行请输入邮箱转发相关配置信息\n请输入smtp地址：");
                 smtpHost = Console.ReadLine().Trim();
@@ -46,19 +46,19 @@ namespace DbusSmsForward.SendMethod
                 result.appSettings.EmailConfig.emailKey = emailKey;
 
                 Console.WriteLine("请输入发件邮箱：");
-                sendEmial = Console.ReadLine().Trim();
-                result.appSettings.EmailConfig.sendEmial = sendEmial;
+                sendEmail = Console.ReadLine().Trim();
+                result.appSettings.EmailConfig.sendEmail = sendEmail;
 
                 Console.WriteLine("请输入收件邮箱：");
-                reciveEmial = Console.ReadLine().Trim();
-                result.appSettings.EmailConfig.reciveEmial = reciveEmial;
+                reciveEmail = Console.ReadLine().Trim();
+                result.appSettings.EmailConfig.reciveEmail = reciveEmail;
 
                 ConfigHelper.UpdateSettings(ref result);
             }
             result = null;
         }
 
-        public static void SendSms(SmsContentModel smsmodel, string body)
+        public static void SendSms(SmsContentModel smsmodel, string body, string devicename)
         {
             appsettingsModel result = new appsettingsModel();
             ConfigHelper.GetSettings(ref result);
@@ -66,14 +66,16 @@ namespace DbusSmsForward.SendMethod
             string smtpPort = result.appSettings.EmailConfig.smtpPort;
             bool enableSSL = Convert.ToBoolean(result.appSettings.EmailConfig.enableSSL);
             string emailKey = result.appSettings.EmailConfig.emailKey;
-            string sendEmial = result.appSettings.EmailConfig.sendEmial;
-            string reciveEmial = result.appSettings.EmailConfig.reciveEmial;
+            string sendEmail = result.appSettings.EmailConfig.sendEmail;
+            string reciveEmail = result.appSettings.EmailConfig.reciveEmail;
             result = null;
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("SMSForwad", sendEmial));
-            message.To.Add(new MailboxAddress("", reciveEmial));
-            string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
-            message.Subject = (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + " ") + "短信转发" + smsmodel.TelNumber;
+            message.From.Add(new MailboxAddress("SMSForwad", sendEmail));
+            message.To.Add(new MailboxAddress("", reciveEmail));
+            //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+            SmsCodeModel codeResult= GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
+
+            message.Subject = (string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + " ") + "短信转发" + smsmodel.TelNumber;
             message.Body = new TextPart("plain")
             {
                 Text = body
@@ -81,7 +83,7 @@ namespace DbusSmsForward.SendMethod
             using (var client = new SmtpClient())
             {
                 client.Connect(smtpHost, Convert.ToInt32(smtpPort), enableSSL);
-                client.Authenticate(sendEmial, emailKey);
+                client.Authenticate(sendEmail, emailKey);
                 client.Send(message);
                 client.Disconnect(true);
             }

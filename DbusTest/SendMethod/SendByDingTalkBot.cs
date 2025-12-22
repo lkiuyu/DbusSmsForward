@@ -34,7 +34,7 @@ namespace DbusSmsForward.SendMethod
             result = null;
         }
 
-        public static void SendSms(SmsContentModel smsmodel, string body)
+        public static void SendSms(SmsContentModel smsmodel, string body, string devicename)
         {
             appsettingsModel result = new appsettingsModel();
             ConfigHelper.GetSettings(ref result);
@@ -42,7 +42,8 @@ namespace DbusSmsForward.SendMethod
             string dingTalkSecret = result.appSettings.DingTalkConfig.DingTalkSecret;
             result = null;
             string url = DING_TALK_BOT_URL + dingTalkAccessToken;
-            string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+            //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+            SmsCodeModel codeResult = GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
 
             long timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             string sign = addSign(timestamp, dingTalkSecret);
@@ -50,7 +51,7 @@ namespace DbusSmsForward.SendMethod
 
             JsonObject msgContent = new()
             {
-                { "content", (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr + "\n") + "短信转发\n" + body }
+                { "content", (string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + "\n") + "短信转发\n" + body }
             };
 
             JsonObject msgObj = new()

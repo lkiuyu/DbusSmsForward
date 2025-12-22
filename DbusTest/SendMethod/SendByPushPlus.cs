@@ -25,18 +25,19 @@ namespace DbusSmsForward.SendMethod
 
         }
 
-        public static void SendSms(SmsContentModel smsmodel, string body)
+        public static void SendSms(SmsContentModel smsmodel, string body, string devicename)
         {
             appsettingsModel result = new appsettingsModel();
             ConfigHelper.GetSettings(ref result);
             string pushPlusToken = result.appSettings.PushPlusConfig.pushPlusToken;
             result = null;
             string pushPlusUrl = "http://www.pushplus.plus/send/";
-            string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+            //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+            SmsCodeModel codeResult = GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
 
             JsonObject obj = new JsonObject();
             obj.Add("token", pushPlusToken);
-            obj.Add("title", (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr+" ") + "短信转发" + smsmodel.TelNumber);
+            obj.Add("title", (string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + " ") + "短信转发" + smsmodel.TelNumber);
             obj.Add("content", body);
             obj.Add("topic","");
             string msgresult = HttpHelper.Post(pushPlusUrl, obj);

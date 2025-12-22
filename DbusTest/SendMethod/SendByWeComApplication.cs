@@ -37,7 +37,7 @@ namespace DbusSmsForward.SendMethod
 
         }
 
-        public static void SendSms(SmsContentModel smsmodel, string body)
+        public static void SendSms(SmsContentModel smsmodel, string body, string devicename)
         {
             appsettingsModel configResult = new appsettingsModel();
             ConfigHelper.GetSettings(ref configResult);
@@ -52,7 +52,9 @@ namespace DbusSmsForward.SendMethod
             JsonObject jsonObj = JsonSerializer.Deserialize(result, SourceGenerationContext.Default.JsonObject);
             string errcode = jsonObj["errcode"].ToString();
             string errmsg = jsonObj["errmsg"].ToString();
-            string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+            //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+            SmsCodeModel codeResult = GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
+
             if (errcode == "0" && errmsg == "ok")
             {
                 string access_token = jsonObj["access_token"].ToString();
@@ -63,7 +65,7 @@ namespace DbusSmsForward.SendMethod
                 obj.Add("totag", "");
                 obj.Add("msgtype", "text");
                 obj.Add("agentid", agentid);
-                obj1.Add("content", (string.IsNullOrEmpty(SmsCodeStr) ? "" : SmsCodeStr+"\n")+"短信转发\n" + body);
+                obj1.Add("content", (string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + "\n")+"短信转发\n" + body);
                 obj.Add("text", obj1);
                 obj.Add("safe", 0);
                 obj.Add("enable_id_trans", 0);

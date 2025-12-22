@@ -69,7 +69,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task ReportKernelEventAsync(Dictionary<string, Variant> properties)
+        public Task ReportKernelEventAsync(Dictionary<string, VariantValue> properties)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -351,7 +351,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetLocationAsync(Dictionary<uint, Variant> value)
+        public Task SetLocationAsync(Dictionary<uint, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -575,7 +575,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetupThresholdsAsync(Dictionary<string, Variant> settings)
+        public Task SetupThresholdsAsync(Dictionary<string, VariantValue> settings)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -648,7 +648,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetCdmaAsync(Dictionary<string, Variant> value)
+        public Task SetCdmaAsync(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -667,7 +667,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetEvdoAsync(Dictionary<string, Variant> value)
+        public Task SetEvdoAsync(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -686,7 +686,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetGsmAsync(Dictionary<string, Variant> value)
+        public Task SetGsmAsync(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -705,7 +705,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetUmtsAsync(Dictionary<string, Variant> value)
+        public Task SetUmtsAsync(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -724,7 +724,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetLteAsync(Dictionary<string, Variant> value)
+        public Task SetLteAsync(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -743,7 +743,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetNr5gAsync(Dictionary<string, Variant> value)
+        public Task SetNr5gAsync(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -1115,7 +1115,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task<ObjectPath> CreateAsync(Dictionary<string, Variant> properties)
+        public Task<ObjectPath> CreateAsync(Dictionary<string, VariantValue> properties)
         {
             return this.Connection.CallMethodAsync(CreateMessage(), (Message m, object? s) => ReadMessage_o(m, (ModemManager1Object)s!), this);
             MessageBuffer CreateMessage()
@@ -1340,7 +1340,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task<ObjectPath> CreateBearerAsync(Dictionary<string, Variant> properties)
+        public Task<ObjectPath> CreateBearerAsync(Dictionary<string, VariantValue> properties)
         {
             return this.Connection.CallMethodAsync(CreateMessage(), (Message m, object? s) => ReadMessage_o(m, (ModemManager1Object)s!), this);
             MessageBuffer CreateMessage()
@@ -2536,7 +2536,7 @@ namespace ModemManager1.DBus
         }
         public ValueTask<IDisposable> WatchNetworkTimeChangedAsync(Action<Exception?, string> handler, bool emitOnCapturedContext = true, ObserverFlags flags = ObserverFlags.None)
             => base.WatchSignalAsync(Service.Destination, __Interface, Path, "NetworkTimeChanged", (Message m, object? s) => ReadMessage_s(m, (ModemManager1Object)s!), handler, emitOnCapturedContext, flags);
-        public Task SetNetworkTimezoneAsync(Dictionary<string, Variant> value)
+        public Task SetNetworkTimezoneAsync(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -2653,7 +2653,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetUpdateSettingsAsync((uint, Dictionary<string, Variant>) value)
+        public Task SetUpdateSettingsAsync((uint, Dictionary<string, VariantValue>) value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -2754,7 +2754,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task<Dictionary<string, VariantValue>> SetAsync(Dictionary<string, Variant> requestedProperties)
+        public Task<Dictionary<string, VariantValue>> SetAsync(Dictionary<string, VariantValue> requestedProperties)
         {
             return this.Connection.CallMethodAsync(CreateMessage(), (Message m, object? s) => ReadMessage_aesv(m, (ModemManager1Object)s!), this);
             MessageBuffer CreateMessage()
@@ -2770,7 +2770,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task DeleteAsync(Dictionary<string, Variant> properties)
+        public Task DeleteAsync(Dictionary<string, VariantValue> properties)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -3018,7 +3018,7 @@ namespace ModemManager1.DBus
         private const string __Interface = "org.freedesktop.ModemManager1.Modem.Simple";
         public Simple(ModemManager1Service service, ObjectPath path) : base(service, path)
         { }
-        public Task<ObjectPath> ConnectAsync(Dictionary<string, Variant> properties)
+        public Task<ObjectPath> ConnectAsync(Dictionary<string, VariantValue> properties)
         {
             return this.Connection.CallMethodAsync(CreateMessage(), (Message m, object? s) => ReadMessage_o(m, (ModemManager1Object)s!), this);
             MessageBuffer CreateMessage()
@@ -3131,7 +3131,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetInitialEpsBearerSettingsAsyncMethod1(Dictionary<string, Variant> settings)
+        public Task SetInitialEpsBearerSettingsAsyncMethod1(Dictionary<string, VariantValue> settings)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -3147,7 +3147,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetNr5gRegistrationSettingsAsyncMethod1(Dictionary<string, Variant> properties)
+        public Task SetNr5gRegistrationSettingsAsyncMethod1(Dictionary<string, VariantValue> properties)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -3366,7 +3366,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetInitialEpsBearerSettingsAsyncMethod2(Dictionary<string, Variant> value)
+        public Task SetInitialEpsBearerSettingsAsyncMethod2(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -3404,7 +3404,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetNr5gRegistrationSettingsAsyncMethod2(Dictionary<string, Variant> value)
+        public Task SetNr5gRegistrationSettingsAsyncMethod2(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -3610,7 +3610,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task<ObjectPath> CreateCallAsync(Dictionary<string, Variant> properties)
+        public Task<ObjectPath> CreateCallAsync(Dictionary<string, VariantValue> properties)
         {
             return this.Connection.CallMethodAsync(CreateMessage(), (Message m, object? s) => ReadMessage_o(m, (ModemManager1Object)s!), this);
             MessageBuffer CreateMessage()
@@ -4495,7 +4495,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetValidityAsync((uint, Variant) value)
+        public Task SetValidityAsync((uint, VariantValue) value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -5008,7 +5008,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetIp4ConfigAsync(Dictionary<string, Variant> value)
+        public Task SetIp4ConfigAsync(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -5027,7 +5027,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetIp6ConfigAsync(Dictionary<string, Variant> value)
+        public Task SetIp6ConfigAsync(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -5046,7 +5046,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetStatsAsync(Dictionary<string, Variant> value)
+        public Task SetStatsAsync(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -5141,7 +5141,7 @@ namespace ModemManager1.DBus
                 return writer.CreateMessage();
             }
         }
-        public Task SetPropertiesAsync(Dictionary<string, Variant> value)
+        public Task SetPropertiesAsync(Dictionary<string, VariantValue> value)
         {
             return this.Connection.CallMethodAsync(CreateMessage());
             MessageBuffer CreateMessage()
@@ -5725,7 +5725,7 @@ namespace ModemManager1.DBus
             }
             return list.ToArray();
         }
-        protected static void WriteType_aeuv(ref MessageWriter writer, Dictionary<uint, Variant> value)
+        protected static void WriteType_aeuv(ref MessageWriter writer, Dictionary<uint, VariantValue> value)
         {
             ArrayStart arrayStart = writer.WriteDictionaryStart();
             foreach (var item in value)
@@ -5783,7 +5783,7 @@ namespace ModemManager1.DBus
             }
             writer.WriteArrayEnd(arrayStart);
         }
-        protected static void WriteType_ruaesvz(ref MessageWriter writer, (uint, Dictionary<string, Variant>) value)
+        protected static void WriteType_ruaesvz(ref MessageWriter writer, (uint, Dictionary<string, VariantValue>) value)
         {
             writer.WriteStructureStart();
             writer.WriteUInt32(value.Item1);
@@ -5811,7 +5811,7 @@ namespace ModemManager1.DBus
             writer.WriteBool(value.Item2);
             writer.WriteArray(value.Item3);
         }
-        protected static void WriteType_ruvz(ref MessageWriter writer, (uint, Variant) value)
+        protected static void WriteType_ruvz(ref MessageWriter writer, (uint, VariantValue) value)
         {
             writer.WriteStructureStart();
             writer.WriteUInt32(value.Item1);

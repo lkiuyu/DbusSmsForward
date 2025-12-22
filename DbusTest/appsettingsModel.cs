@@ -19,8 +19,10 @@ namespace DbusSmsForward.SettingModel
         public Barkconfig BarkConfig { get; set; }
         public Wecomapplicationconfig WeComApplicationConfig { get; set; }
         public TGBotConfig TGBotConfig { get; set; }
+        public ShellConfig ShellConfig { get; set; }
         public string SmsCodeKey { get; set; }
         public string ForwardIgnoreStorageType { get; set; }
+        public string DeviceName { get; set; }
     }
 
     public class Emailconfig
@@ -29,8 +31,8 @@ namespace DbusSmsForward.SettingModel
         public string smtpPort { get; set; }
         public string enableSSL { get; set; }
         public string emailKey { get; set; }
-        public string sendEmial { get; set; }
-        public string reciveEmial { get; set; }
+        public string sendEmail { get; set; }
+        public string reciveEmail { get; set; }
     }
 
     public class Pushplusconfig
@@ -47,7 +49,7 @@ namespace DbusSmsForward.SettingModel
     public class Barkconfig
     {
         public string BarkUrl { get; set; }
-        public string BrakKey { get; set; }
+        public string BarkKey { get; set; }
     }
 
     public class Wecomapplicationconfig
@@ -63,6 +65,11 @@ namespace DbusSmsForward.SettingModel
         public string CustomTGBotApi { get; set; }
         public string TGBotToken { get; set; }
         public string TGBotChatID { get; set; }
+    }
+
+    public class ShellConfig
+    {
+        public string ShellPath { get; set; }
     }
 
 }
