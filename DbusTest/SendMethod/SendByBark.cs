@@ -60,7 +60,7 @@ namespace DbusSmsForward.SendMethod
             }
             catch(Exception ex)
             {
-                Console.WriteLine(ex);
+                Console.WriteLine("SendByBarkError:\n"+ex);
             }
             
         }

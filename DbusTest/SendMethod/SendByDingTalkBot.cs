@@ -36,43 +36,51 @@ namespace DbusSmsForward.SendMethod
 
         public static void SendSms(SmsContentModel smsmodel, string body, string devicename)
         {
-            appsettingsModel result = new appsettingsModel();
-            ConfigHelper.GetSettings(ref result);
-            string dingTalkAccessToken = result.appSettings.DingTalkConfig.DingTalkAccessToken;
-            string dingTalkSecret = result.appSettings.DingTalkConfig.DingTalkSecret;
-            result = null;
-            string url = DING_TALK_BOT_URL + dingTalkAccessToken;
-            //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
-            SmsCodeModel codeResult = GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
-
-            long timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            string sign = addSign(timestamp, dingTalkSecret);
-            url += $"&timestamp={timestamp}&sign={sign}";
-
-            JsonObject msgContent = new()
+            try
             {
-                { "content", (string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + "\n") + "短信转发\n" + body }
-            };
+                appsettingsModel result = new appsettingsModel();
+                ConfigHelper.GetSettings(ref result);
+                string dingTalkAccessToken = result.appSettings.DingTalkConfig.DingTalkAccessToken;
+                string dingTalkSecret = result.appSettings.DingTalkConfig.DingTalkSecret;
+                result = null;
+                string url = DING_TALK_BOT_URL + dingTalkAccessToken;
+                //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+                SmsCodeModel codeResult = GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
 
-            JsonObject msgObj = new()
-            {
-                { "msgtype", "text" },
-                { "text", msgContent }
-            };
+                long timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                string sign = addSign(timestamp, dingTalkSecret);
+                url += $"&timestamp={timestamp}&sign={sign}";
 
-            string resultResp = HttpHelper.Post(url, msgObj);
-            //JObject jsonObjresult = JObject.Parse(resultResp);
-            JsonObject jsonObjresult = JsonSerializer.Deserialize(resultResp, SourceGenerationContext.Default.JsonObject);
-            string errcode1 = jsonObjresult["errcode"].ToString();
-            string errmsg1 = jsonObjresult["errmsg"].ToString();
-            if (errcode1 == "0" && errmsg1 == "ok")
-            {
-                Console.WriteLine("钉钉转发成功");
+                JsonObject msgContent = new()
+                {
+                    { "content", (string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + "\n") + "短信转发\n" + body }
+                };
+
+                JsonObject msgObj = new()
+                {
+                    { "msgtype", "text" },
+                    { "text", msgContent }
+                };
+
+                string resultResp = HttpHelper.Post(url, msgObj);
+                //JObject jsonObjresult = JObject.Parse(resultResp);
+                JsonObject jsonObjresult = JsonSerializer.Deserialize(resultResp, SourceGenerationContext.Default.JsonObject);
+                string errcode1 = jsonObjresult["errcode"].ToString();
+                string errmsg1 = jsonObjresult["errmsg"].ToString();
+                if (errcode1 == "0" && errmsg1 == "ok")
+                {
+                    Console.WriteLine("钉钉转发成功");
+                }
+                else
+                {
+                    Console.WriteLine(errmsg1);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine(errmsg1);
+                Console.WriteLine("SendByDingTalkBotError:\n" + ex);
             }
+            
         }
 
         public static string addSign(long timestamp ,string secret)

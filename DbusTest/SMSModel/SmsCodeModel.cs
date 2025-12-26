@@ -8,8 +8,8 @@ namespace DbusSmsForward.SMSModel
 {
     public class SmsCodeModel
     {
-        public bool HasCode { get; set; }
-        public string CodeFrom { get; set; }
-        public string CodeValue { get; set; }
+        public bool HasCode { get; set; }=false;
+        public string CodeFrom { get; set; }=string.Empty;
+        public string CodeValue { get; set; } = string.Empty;
     }
 }

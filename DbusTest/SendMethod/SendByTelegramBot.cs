@@ -54,39 +54,45 @@ namespace DbusSmsForward.SendMethod
 
         public static void SendSms(SmsContentModel smsmodel, string body, string devicename)
         {
-            appsettingsModel result = new appsettingsModel();
-            ConfigHelper.GetSettings(ref result);
-            string TGBotToken = result.appSettings.TGBotConfig.TGBotToken;
-            string TGBotChatID = result.appSettings.TGBotConfig.TGBotChatID;
-            string IsEnableCustomTGBotApi = result.appSettings.TGBotConfig.IsEnableCustomTGBotApi;
-            string CustomTGBotApi = result.appSettings.TGBotConfig.CustomTGBotApi;
-            result = null;
-            //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
-            SmsCodeModel codeResult = GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
-            string url = "";
-            if (IsEnableCustomTGBotApi=="true")
+            try
             {
-                url = CustomTGBotApi;
+                appsettingsModel result = new appsettingsModel();
+                ConfigHelper.GetSettings(ref result);
+                string TGBotToken = result.appSettings.TGBotConfig.TGBotToken;
+                string TGBotChatID = result.appSettings.TGBotConfig.TGBotChatID;
+                string IsEnableCustomTGBotApi = result.appSettings.TGBotConfig.IsEnableCustomTGBotApi;
+                string CustomTGBotApi = result.appSettings.TGBotConfig.CustomTGBotApi;
+                result = null;
+                //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+                SmsCodeModel codeResult = GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
+                string url = "";
+                if (IsEnableCustomTGBotApi == "true")
+                {
+                    url = CustomTGBotApi;
+                }
+                else
+                {
+                    url = "https://api.telegram.org";
+                }
+                url += "/bot" + TGBotToken + "/sendMessage?chat_id=" + TGBotChatID + "&text=";
+                url += System.Web.HttpUtility.UrlEncode((string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + "\n") + "短信转发\n" + body);
+                string msgresult = HttpHelper.HttpGet(url);
+                JsonObject jsonObjresult = JsonSerializer.Deserialize(msgresult, SourceGenerationContext.Default.JsonObject);
+                string status = jsonObjresult["ok"].ToString();
+                if (status.ToLower() == "true")
+                {
+                    Console.WriteLine("TGBot转发成功");
+                }
+                else
+                {
+                    Console.WriteLine(jsonObjresult["error_code"].ToString());
+                    Console.WriteLine(jsonObjresult["description"].ToString());
+                }
             }
-            else
+            catch (Exception ex)
             {
-                url = "https://api.telegram.org";
+                Console.WriteLine("SendByTelegramBotError:\n" + ex);
             }
-            url+= "/bot" + TGBotToken + "/sendMessage?chat_id=" + TGBotChatID + "&text=";
-            url += System.Web.HttpUtility.UrlEncode((string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + "\n") + "短信转发\n" + body);
-            string msgresult = HttpHelper.HttpGet(url);
-            JsonObject jsonObjresult = JsonSerializer.Deserialize(msgresult, SourceGenerationContext.Default.JsonObject);
-            string status = jsonObjresult["ok"].ToString();
-            if (status.ToLower() == "true")
-            {
-                Console.WriteLine("TGBot转发成功");
-            }
-            else
-            {
-                Console.WriteLine(jsonObjresult["error_code"].ToString());
-                Console.WriteLine(jsonObjresult["description"].ToString());
-            }
-
         }
 
         

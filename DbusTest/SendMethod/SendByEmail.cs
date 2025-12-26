@@ -60,32 +60,39 @@ namespace DbusSmsForward.SendMethod
 
         public static void SendSms(SmsContentModel smsmodel, string body, string devicename)
         {
-            appsettingsModel result = new appsettingsModel();
-            ConfigHelper.GetSettings(ref result);
-            string smtpHost = result.appSettings.EmailConfig.smtpHost;
-            string smtpPort = result.appSettings.EmailConfig.smtpPort;
-            bool enableSSL = Convert.ToBoolean(result.appSettings.EmailConfig.enableSSL);
-            string emailKey = result.appSettings.EmailConfig.emailKey;
-            string sendEmail = result.appSettings.EmailConfig.sendEmail;
-            string reciveEmail = result.appSettings.EmailConfig.reciveEmail;
-            result = null;
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("SMSForwad", sendEmail));
-            message.To.Add(new MailboxAddress("", reciveEmail));
-            //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
-            SmsCodeModel codeResult= GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
+            try
+            {
+                appsettingsModel result = new appsettingsModel();
+                ConfigHelper.GetSettings(ref result);
+                string smtpHost = result.appSettings.EmailConfig.smtpHost;
+                string smtpPort = result.appSettings.EmailConfig.smtpPort;
+                bool enableSSL = Convert.ToBoolean(result.appSettings.EmailConfig.enableSSL);
+                string emailKey = result.appSettings.EmailConfig.emailKey;
+                string sendEmail = result.appSettings.EmailConfig.sendEmail;
+                string reciveEmail = result.appSettings.EmailConfig.reciveEmail;
+                result = null;
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress("SMSForwad", sendEmail));
+                message.To.Add(new MailboxAddress("", reciveEmail));
+                //string SmsCodeStr = GetSmsContentCode.GetSmsCodeStr(smsmodel.SmsContent);
+                SmsCodeModel codeResult = GetSmsContentCode.GetSmsCodeModel(smsmodel.SmsContent);
 
-            message.Subject = (string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + " ") + "短信转发" + smsmodel.TelNumber;
-            message.Body = new TextPart("plain")
+                message.Subject = (string.IsNullOrEmpty(codeResult.CodeValue) ? "" : codeResult.CodeValue + " ") + "短信转发" + smsmodel.TelNumber;
+                message.Body = new TextPart("plain")
+                {
+                    Text = body
+                };
+                using (var client = new SmtpClient())
+                {
+                    client.Connect(smtpHost, Convert.ToInt32(smtpPort), enableSSL);
+                    client.Authenticate(sendEmail, emailKey);
+                    client.Send(message);
+                    client.Disconnect(true);
+                }
+            }
+            catch (Exception ex)
             {
-                Text = body
-            };
-            using (var client = new SmtpClient())
-            {
-                client.Connect(smtpHost, Convert.ToInt32(smtpPort), enableSSL);
-                client.Authenticate(sendEmail, emailKey);
-                client.Send(message);
-                client.Disconnect(true);
+                Console.WriteLine("SendByEmailError:\n" + ex);
             }
         }
     }
