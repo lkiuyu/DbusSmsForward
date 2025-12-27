@@ -196,10 +196,21 @@ namespace DbusSmsForward.ModemHelper
                                                     string telNum = await sms.GetNumberAsync();
                                                     //string smsDate = (await sms.GetTimestampAsync()).Replace("T", " ").Replace("+08:00", " ");
 
-                                                    DateTimeOffset dto = DateTimeOffset.Parse(await sms.GetTimestampAsync(), null, DateTimeStyles.RoundtripKind);
-                                                    // 转换为本地时间
-                                                    DateTime localTime = dto.LocalDateTime;
-                                                    string smsDate = localTime.ToString("yyyy-MM-dd HH:mm:ss");
+                                                    string smsdateOrg = await sms.GetTimestampAsync();
+                                                    string smsDate = string.Empty;
+                                                    try
+                                                    {
+                                                        DateTimeOffset dto = DateTimeOffset.Parse(smsdateOrg, null, DateTimeStyles.RoundtripKind);
+
+                                                        // 转换为本地时间
+                                                        DateTime localTime = dto.LocalDateTime;
+                                                        smsDate = localTime.ToString("yyyy-MM-dd HH:mm:ss");
+                                                    }
+                                                    catch (Exception ex1)
+                                                    {
+                                                        Console.WriteLine("smsdate转换失败:\n" + ex1.Message);
+                                                        smsDate = smsdateOrg;
+                                                    }
                                                     int tryCount = 0;
                                                     do
                                                     {
